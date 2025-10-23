@@ -12,6 +12,14 @@ public class ChunkBehaviour : MonoBehaviour, ISerializedFieldProvider
         transform.position = new Vector3Int(concatenatingXPosition * GRID_SIZE, 0, concatenatingYPosition * GRID_SIZE);
     }
 
+    // Layer generator
+    public void GenerateNewLayer()
+    {
+        GameObject newLayer = new GameObject();
+        newLayer.transform.parent = transform;
+        newLayer.AddComponent<LayerBehaviour>().TranslateHeightPosition();
+    }
+
     // Getters
     public Vector2Int ConcatenatingPosition => _concatenatingPosition;
 
