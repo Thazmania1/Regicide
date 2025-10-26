@@ -26,7 +26,7 @@ public class LayerBehaviourEditor : Editor
         {
             serializedObject.Update();
 
-            SerializedProperty height = serializedObject.FindProperty(layerBehaviour.GetSerializedFieldName("Height"));
+            SerializedProperty height = serializedObject.FindProperty(layerBehaviour.HeightReference);
             EditorGUILayout.PropertyField(height);
 
             serializedObject.ApplyModifiedProperties();
@@ -44,7 +44,7 @@ public class LayerBehaviourEditor : Editor
                 if(isolatedLayerBehaviour == null) continue;
 
                 SerializedObject isolatedSerializedObject = new SerializedObject(isolatedLayerBehaviour);
-                SerializedProperty grid = isolatedSerializedObject.FindProperty(isolatedLayerBehaviour.GetSerializedFieldName("Grid"));
+                SerializedProperty grid = isolatedSerializedObject.FindProperty(isolatedLayerBehaviour.GridReference);
 
                 isolatedSerializedObject.Update();
 
@@ -84,7 +84,7 @@ public class LayerBehaviourEditor : Editor
         Transform targetTransform = layerBehaviour.transform;
 
         // Calculates the center point of the layer, and spawns in an interactable grid
-        IReadOnlyList<bool> rawLayerGrid = layerBehaviour.LayerGrid;
+        IReadOnlyList<bool> rawLayerGrid = layerBehaviour.Grid;
         int gridCenter = GRID_SIZE / 2;
         float gridOffset = rawLayerGrid.Count % 2 != 0 ? 0.0f : 0.5f;
         float gridXPositionStart = targetTransform.position.x - gridCenter + gridOffset;
@@ -123,7 +123,7 @@ public class LayerBehaviourEditor : Editor
                 )
                 {
                     SerializedProperty
-                        grid = isolatedSerializedObject.FindProperty(layerBehaviour.GetSerializedFieldName("Grid"));
+                        grid = isolatedSerializedObject.FindProperty(layerBehaviour.GridReference);
 
                     SerializedProperty block = grid.GetArrayElementAtIndex(unwrappedIndex);
                     block.boolValue = !block.boolValue;

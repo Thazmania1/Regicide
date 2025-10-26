@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <link rel="icon" href="../favicon.ico">
+        <title>Main menu</title>
+
+        <link rel="stylesheet" href="../css/general.css">
+        <style>
+            nav
+            {
+                width: 100%;
+
+                gap: 25px;
+            }
+            nav a
+            {
+                display: block;
+                flex: 0 0 60px;
+
+                display: flex;
+                align-items: center;
+                justify-content: center;
+
+                border: 3px solid var(--rgb250);
+                border-radius: 10px;
+
+                text-decoration: none;
+                font-size: large;
+
+                transition: scale 0.1s ease, box-shadow 0.1s ease, rotate 0.1s ease;
+            }
+            nav a:hover
+            {
+                scale: 1.05;
+                box-shadow: 0 0 7.5px 0 var(--rgb250);
+                rotate: 1deg;
+            }
+        </style>
+    </head>
+    <body>
+        <h1><img class="pixel-img" src="../multimedia/regicide_icon.png" alt="Regicide icon">Regicide documentation 1.0</h1>
+        <p><img class="pixel-img" src="../multimedia/regicide_icon.png" alt="Regicide icon"><strong>Regicide</strong> is a school project video game developed in the <img src="../multimedia/unity_logo.png" alt="Unity logo"><strong>Unity</strong> video game engine.</p>
+        <p>This documentation assumes that the reader is familiar with any part of <img src="../multimedia/unity_logo.png" alt="Unity logo"><strong>Unity's</strong> API mentioned here.</p>
+
+        <p>If you are interested in learning <i>how</i> the video game was planned and developed rather than <i>what</i> the final result does internally, I reccomend checking out its <a href="https://www.notion.so/Regicide-1f76f5f1f2358037bde7f54831ff9976" target="_blank" rel="noopener noreferrer"><img src="../multimedia/notion_logo.png" alt="Notion logo">Notion page</a>.</p>
+
+        <nav class="flex column nowrap">
+            <a href="./mapping.html">Mapping system</a>
+        </nav>
+    </body>
+</html>

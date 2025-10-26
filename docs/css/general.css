@@ -1,0 +1,210 @@
+:root
+{
+    --rgb250: rgb(250, 250, 250);
+    --rgb225: rgb(225, 225, 225);
+    --rgb200: rgb(200, 200, 200);
+    --rgb175: rgb(175, 175, 175);
+    --rgb150: rgb(150, 150, 150);
+    --rgb125: rgb(125, 125, 125);
+    --rgb100: rgb(100, 100, 100);
+    --rgb75: rgb(75, 75, 75);
+    --rgb50: rgb(50, 50, 50);
+    --rgb25: rgb(25, 25, 25);
+
+    --link: rgb(0, 150, 255);
+}
+
+html, html *
+{
+    scroll-behavior: smooth;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body
+{
+    background-color: var(--rgb25);
+    color: var(--rgb250);
+    font-family: Cambria, Cochin, Georgia, Times, 'Times New Roman', serif;
+    text-align: justify;
+
+    display: flex;
+    flex-flow: column nowrap;
+    align-items: center;
+    gap: 1.5rem;
+
+    padding: 25px 10dvw;
+}
+
+/* Flexbox modular classes */
+.flex
+{
+    display: flex;
+}
+.flex.column
+{
+    flex-direction: column;
+}
+.flex.row
+{
+    flex-direction: row;
+}
+.flex.wrap
+{
+    flex-wrap: wrap;
+}
+.flex.nowrap
+{
+    flex-wrap: nowrap;
+}
+.flex.center-main-axis
+{
+    justify-content: center;
+}
+.flex.center-cross-axis
+{
+    align-items: center;
+}
+
+a
+{
+    color: var(--link);
+    font-weight: bold;
+}
+
+code
+{
+    display: block;
+    width: fit-content;
+    
+    padding: 10px;
+
+    background-color: var(--rgb50);
+    color: rgb(255, 255, 0);
+
+    text-align: left;
+    white-space: pre-wrap;
+}
+code a
+{
+    color: inherit;
+}
+
+img
+{
+    display: block;
+
+    width: 100%;
+    height: auto;
+}
+.pixel-img
+{
+    image-rendering: pixelated;
+}
+
+/* General heading styles */
+h1, h2, h3, h4, h5, h6
+{
+    text-align: center;
+    margin: 1em 0 0.50em 0;
+}
+
+/* Images as text */
+h1 img,
+h2 img,
+h3 img,
+h4 img,
+h5 img,
+h6 img,
+p img
+{
+    display: inline;
+    vertical-align: text-bottom;
+    width: auto;
+    height: 1em;
+}
+
+/* Inline code snippets */
+p code,
+figcaption code,
+li code
+{
+    display: inline;
+    white-space: inherit;
+    
+    padding: 0;
+}
+
+/* Responsive typography */
+h1
+{
+    font-size: clamp(2rem, 5vw, 3rem);
+}
+h2
+{
+    font-size: clamp(1.5rem, 4vw, 2.25rem);
+}
+h3
+{
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+}
+h4
+{
+    font-size: clamp(1.15rem, 2.5vw, 1.5rem);
+}
+
+p, figcaption, li
+{
+    font-size: clamp(1rem, 2.5vw, 1.25rem);
+}
+
+/* Nesting list indenting */
+li > ol,
+li > ul
+{
+    list-style-position: inside;
+}
+
+/* Responsive imagery */
+iframe
+{
+    aspect-ratio: 16 / 9;
+    width: 100%;
+    height: auto;
+}
+
+/* Style for the previous page button */
+#previous-page
+{
+    width: 33px;
+    height: 33px;
+
+    position: fixed;
+    top: 20px;
+    left: 20px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 2px solid var(--rgb250);
+    background-color: inherit;
+    border-radius: 7.5px;
+
+    padding: 10px;
+
+    transition: scale 0.1s ease, box-shadow 0.1s ease;
+}
+#previous-page:hover
+{
+    scale: 1.05;
+    box-shadow: 0 0 7.5px 0 var(--rgb250);
+}
+
+/* Debugging class */
+.outline-all,
+.outline-all *
+{
+    outline: 1px solid rgb(250, 0, 0);
+}

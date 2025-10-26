@@ -1,8 +1,8 @@
 using UnityEngine;
 
-public class ChunkBehaviour : MonoBehaviour, ISerializedFieldProvider
+public class ChunkBehaviour : MonoBehaviour
 {
-    // Transform positions are based on the concatenating positions multiplied by the grid size
+    // Transform world position is based on the concatenating positions multiplied by the grid size
     public const int GRID_SIZE = 8;
     [SerializeField] private Vector2Int _concatenatingPosition = new Vector2Int(0, 0);
     public void TranslateConcatenatingPosition()
@@ -12,23 +12,9 @@ public class ChunkBehaviour : MonoBehaviour, ISerializedFieldProvider
         transform.position = new Vector3Int(concatenatingXPosition * GRID_SIZE, 0, concatenatingYPosition * GRID_SIZE);
     }
 
-    // Layer generator
-    public void GenerateNewLayer()
-    {
-        GameObject newLayer = new GameObject();
-        newLayer.transform.parent = transform;
-        newLayer.AddComponent<LayerBehaviour>().TranslateHeightPosition();
-    }
-
     // Getters
     public Vector2Int ConcatenatingPosition => _concatenatingPosition;
 
-    public string GetSerializedFieldName(string name)
-    {
-        return name switch
-        {
-            "ConcatenatingPosition" => nameof(_concatenatingPosition),
-            _ => throw new System.ArgumentException($"Unknown field: {name}")
-        };
-    }
+    // Serialization getters
+    public string ConcatenatingPositionReference => nameof(_concatenatingPosition);
 }

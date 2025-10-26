@@ -1,5 +1,5 @@
-using UnityEngine;
 using UnityEditor;
+using UnityEngine;
 
 [CustomEditor(typeof(ChunkBehaviour))]
 public class ChunkBehaviourEditor : Editor
@@ -7,12 +7,12 @@ public class ChunkBehaviourEditor : Editor
     public override void OnInspectorGUI()
     {
         // Sets up serliazed fields
-        ChunkBehaviour chunkManager = (ChunkBehaviour) target;
+        ChunkBehaviour chunkManager = (ChunkBehaviour)target;
 
         serializedObject.Update();
 
         SerializedProperty
-            concatenatingPosition = serializedObject.FindProperty(chunkManager.GetSerializedFieldName("ConcatenatingPosition"));
+            concatenatingPosition = serializedObject.FindProperty(chunkManager.ConcatenatingPositionReference);
 
         EditorGUILayout.LabelField("Concatenating position");
         EditorGUI.indentLevel++;
@@ -20,9 +20,14 @@ public class ChunkBehaviourEditor : Editor
         EditorGUILayout.PropertyField(concatenatingPosition.FindPropertyRelative("y"), new GUIContent("Z"));
         EditorGUI.indentLevel--;
         EditorGUILayout.Space();
+
+        // Layer creation logic
         if (GUILayout.Button("Generate new layer"))
         {
-            chunkManager.GenerateNewLayer();
+            GameObject newLayer = new GameObject();
+            Undo.RegisterCreatedObjectUndo(newLayer, "Generated new layer");
+            newLayer.transform.parent = chunkManager.transform;
+            newLayer.AddComponent<LayerBehaviour>().TranslateHeightPosition();
         }
 
         serializedObject.ApplyModifiedProperties();

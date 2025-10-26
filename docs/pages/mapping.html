@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <link rel="icon" href="../favicon.ico" type="image/x-icon">
+        <title>Mapping system</title>
+
+        <link rel="stylesheet" href="../css/general.css">
+    </head>
+<body>
+    <a id="previous-page" href="./index.html"><img src="../multimedia/back_icon.png" alt="Back icon"></a>
+    <h1>Mapping system</h1>
+    <p>The map is based on a 3D grid through renderable <strong>chunks</strong> and <strong>layers</strong>, <strong>chunks</strong> acting as the horizontal position of the grid, and the <strong>layers</strong> as the vertical.</p>
+    <p><strong>Chunks</strong> hold a constant grid size in order to concatenate each other seamlessly, and <strong>layers</strong>, which reside as children inside the <strong>chunks</strong>, display an interactable grid in the scene view when selected in the hierarchy.</p>
+
+    <h2>Chunks</h2>
+    <p>A <strong>chunk</strong> is really just an empty <code>GameObject</code> prefab that holds a <code>ChunkBehaviour</code> script.</p>
+
+    <h3><img src="../multimedia/cs_logo.png" alt="C# logo">ChunkBehaviour</h3>
+    <p>Contains the <strong>chunk</strong> grid positioning logic and <strong>layer</strong> creation.</p>
+    <p>The script is too small to break down into sections.</p>
+    <code>
+using UnityEngine;
+
+public class ChunkBehaviour : MonoBehaviour
+{
+    // Transform world position is based on the concatenating positions multiplied by the grid size
+    public const int GRID_SIZE = 8;
+    [SerializeField] private Vector2Int _concatenatingPosition = new Vector2Int(0, 0);
+    public void TranslateConcatenatingPosition()
+    {
+        int concatenatingXPosition = _concatenatingPosition.x, concatenatingYPosition = _concatenatingPosition.y;
+        gameObject.name = $"Chunk X{concatenatingXPosition} Z{concatenatingYPosition}";
+        transform.position = new Vector3Int(concatenatingXPosition * GRID_SIZE, 0, concatenatingYPosition * GRID_SIZE);
+    }
+
+    // Getters
+    public Vector2Int ConcatenatingPosition => _concatenatingPosition;
+
+    // Serialization getters
+    public string ConcatenatingPositionReference => nameof(_concatenatingPosition);
+}
+    </code>
+    
+    <h4>Important variables</h4>
+    <ul>
+        <li><code>GRID_SIZE</code>: Declares a constant <code>int</code> to determine the grid size across all chunks. It's safe to make it public since it's unmodifiable, <strong>layers</strong> also use this variable.</li>
+        <li><code>_concatenatingPosition</code>: Utilizes a <code>Vector2Int</code> in order to enforce proper <strong>chunk</strong> concatenation. This variable's values are multiplied by the <code>GRID_SIZE</code> variable to be translated to world position transform.</li>
+    </ul>
+
+    <h4>Important methods</h4>
+    <ul>
+        <li><code>TranslateConcatenatingPosition()</code>: Positions the <strong>chunk</strong> relative to the <code>_concatenatingPosition</code> and the <code>GRID_SIZE</code> variables. Also names the <strong>chunk</strong> after its concatenating position.</li>
+    </ul>
+
+
+    <h3><img src="../multimedia/cs_logo.png" alt="C# logo">ChunkBehaviourEditor</h3>
+    <p>A simple <code>Editor</code> script to manipulate the <code>ChunkBehaviour</code> script inspector window. Holds the <strong>layer</strong> creation logic.</p>
+    <p>The script is too small to break down into sections.</p>
+    <code>
+using UnityEditor;
+using UnityEngine;
+
+[CustomEditor(typeof(ChunkBehaviour))]
+public class ChunkBehaviourEditor : Editor
+{
+    public override void OnInspectorGUI()
+    {
+        // Sets up serliazed fields
+        ChunkBehaviour chunkManager = (ChunkBehaviour)target;
+
+        serializedObject.Update();
+
+        SerializedProperty
+            concatenatingPosition = serializedObject.FindProperty(chunkManager.ConcatenatingPositionReference);
+
+        EditorGUILayout.LabelField("Concatenating position");
+        EditorGUI.indentLevel++;
+        EditorGUILayout.PropertyField(concatenatingPosition.FindPropertyRelative("x"), new GUIContent("X"));
+        EditorGUILayout.PropertyField(concatenatingPosition.FindPropertyRelative("y"), new GUIContent("Z"));
+        EditorGUI.indentLevel--;
+        EditorGUILayout.Space();
+
+        // Layer creation logic
+        if (GUILayout.Button("Generate new layer"))
+        {
+            GameObject newLayer = new GameObject();
+            Undo.RegisterCreatedObjectUndo(newLayer, "Generated new layer");
+            newLayer.transform.parent = chunkManager.transform;
+            newLayer.AddComponent&lt;LayerBehaviour&gt;().TranslateHeightPosition();
+        }
+
+        serializedObject.ApplyModifiedProperties();
+        chunkManager.TranslateConcatenatingPosition();
+    }
+}
+    </code>
+
+    
+    <h3><img src="../multimedia/youtube_logo.png" alt="Youtube logo">Chunk demonstration</h3>
+    <iframe src="https://www.youtube.com/embed/ijQMeUG5Q1E?si=QFS0q-PN46qPTy6j" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+
+    
+    <h2>Layers</h2>
+    <p><strong>Layers</strong> are created through <strong>chunks</strong>, although they're also just an empty <code>GameObject</code> with a <code>LayerBehaviour</code> script.</p>
+
+    <h3><img src="../multimedia/cs_logo.png" alt="C# logo">LayerBehaviour</h3>
+    <p>Contains the <strong>layer's</strong> height position and an array of boolean values that represent a grid.</p>
+    <p>The script is too small to break down into sections.</p>
+    <code>
+using System.Collections.Generic;
+using UnityEngine;
+using static ChunkBehaviour;
+
+public class LayerBehaviour : MonoBehaviour
+{
+    // Transform Yposition is based on the height.
+    [SerializeField] private int _height = 0;
+    public void TranslateHeightPosition()
+    {
+        gameObject.name = $"Layer {_height}";
+        transform.localPosition = new Vector3Int(0, _height, 0);
+    }
+
+    // Tracks the occupied positions of the layer's grid
+    [SerializeField] private bool[] _grid = new bool[GRID_SIZE * GRID_SIZE];
+
+    // Getters
+    public int Height => _height;
+    public IReadOnlyList<bool> Grid => System.Array.AsReadOnly(_grid);
+
+    // Serialization getters
+    public string HeightReference => nameof(_height);
+    public string GridReference => nameof(_grid);
+}
+    </code>
+
+    <h4>Important variables</h4>
+    <ul>
+        <li><code>_height</code>: Declares the <strong>layer's</strong> height position.</li>
+        <li><code>_grid</code>: An array of boolean values that represent a grid with cells that can be toggled off and on. The size of the array is based on the <code>ChunkBehaviour</code>'s script <code>GRID_SIZE</code> variable.</li>
+    </ul>
+
+    <h4>Important methods</h4>
+    <ul>
+        <li><code>TranslateHeightPosition()</code>: Positions the <strong>layer</strong> relative to the <code>_height</code> variable. Also names the <strong>layer</strong> after its height.</li>
+    </ul>
+
+
+    <h3><img src="../multimedia/cs_logo.png" alt="C# logo">LayerBehaviourEditor</h3>
+    <p>An <code>Editor</code> script to manipulate the <code>LayerBehaviour</code> script inspector window and to display an interactable grid in the scene view.</p>
+    <p>The script is big enough to be broken down into sections.</p>
+
+    <h4>Multi-selection setup</h4>
+    <p><img src="../multimedia/unity_logo.png" alt="Unity logo"><strong>Unity's</strong> <code>OnSceneGUI()</code> does not support multi-selection, so instead, <code>LayerBehaviourEditor</code> uses its own function (<code>OnGlobalSceneGUI()</code>) that subscribes to <code>SceneView.duringSceneGUI</code> when <code>OnEnable()</code> is triggered, alongside hiding any other gizmo or handle.</p>
+    <p><code>OnGlobalSceneGUI()</code> isolates each <strong>layer</strong> that's selected in the hierarchy to have their respective grids be drawn.</p>
+    <code>
+private void OnEnable()
+{
+    Tools.hidden = true;
+    SceneView.duringSceneGui += OnGlobalSceneGUI;
+}
+    </code>
+    <code>
+// OnSceneGUI() doesn't support multi-selection on its own so a wrapper is needed
+private void OnGlobalSceneGUI(SceneView sceneView)
+{
+    // Only draws a grid on actual layers, else it would break
+    foreach (var gameObject in targets)
+    {
+        LayerBehaviour layerBehaviour = gameObject as LayerBehaviour;
+        if (layerBehaviour == null) continue;
+
+        SerializedObject serializedObject = new SerializedObject(layerBehaviour);
+        DrawLayerGrid(layerBehaviour, serializedObject);
+    }
+}
+    </code>
+    <code>
+private void OnDisable()
+{
+    Tools.hidden = false;
+    SceneView.duringSceneGui -= OnGlobalSceneGUI;
+}
+    </code>
+
+    <h4>Inspector window</h4>
+    <ol>
+        <li>If a single <strong>layer</strong> is selected, the user will be able to manipulate its height position and reset its grid.</li>
+        <li>If multiple <strong>layers</strong> are selected, the user will not be able to manipulate their height position, as it just would be unpractical, however, pressing the "Reset grid" button will affect every selected <strong>layer</strong>.</li>
+        <li>If the selection group contains anything other than a <strong>layer</strong>, the <code>LayerBehaviour</code> script inspector window will become unusable.</li>
+    </ol>
+    <code>
+public override void OnInspectorGUI()
+{
+    LayerBehaviour layerBehaviour = (LayerBehaviour)target; // Only used in single selection cases
+
+    // Wouldn't make sense to allow groupal height changes
+    if (targets.Length > 1)
+    {
+        EditorGUILayout.HelpBox("Multi-layer height editing is not allowed.", MessageType.Info);
+    }
+    else
+    {
+        serializedObject.Update();
+
+        SerializedProperty height = serializedObject.FindProperty(layerBehaviour.HeightReference);
+        EditorGUILayout.PropertyField(height);
+
+        serializedObject.ApplyModifiedProperties();
+        layerBehaviour.TranslateHeightPosition();
+    }
+
+    EditorGUILayout.Space();
+
+    // Toggles off the entire grid
+    if (GUILayout.Button("Reset grid"))
+    {
+        foreach(var gameObject in targets)
+        {
+            LayerBehaviour isolatedLayerBehaviour = gameObject as LayerBehaviour;
+            if(isolatedLayerBehaviour == null) continue;
+
+            SerializedObject isolatedSerializedObject = new SerializedObject(isolatedLayerBehaviour);
+            SerializedProperty grid = isolatedSerializedObject.FindProperty(isolatedLayerBehaviour.GridReference);
+
+            isolatedSerializedObject.Update();
+
+            for(int i = 0; i < grid.arraySize; i++)
+            {
+                grid.GetArrayElementAtIndex(i).boolValue = false;
+                Transform blockTransform = isolatedLayerBehaviour.transform.Find($"Block {i}");
+                if (blockTransform != null)
+                {
+                    Undo.DestroyObjectImmediate(blockTransform.gameObject);
+                }
+            }
+
+            isolatedSerializedObject.ApplyModifiedProperties();
+        }
+    }
+}
+    </code>
+
+    <h4>Scene view</h4>
+    <p>When selecting <strong>layers</strong>, a grid of transparent blocks will be drawn around the center of the layer (taking account of odd and even grids). Every grid block can be clicked to be toggled, and they have a visual cue:</p>
+    <ol>
+        <li><strong>Toggled off</strong>: White.</li>
+        <li><Strong>Toggled on</Strong>: Green.</li>
+    </ol>
+    <p>When a block is toggled on, the script will create a new, physical cube object in it, assigning it a color depending if it's in an odd or even position to represent a chess board.</p>
+    <p>When a block is toggled off, it will try to find its respective physical block in the hierarchy to erase it. The script trusts that the user will not move or rename the physical cubes of a <strong>layer</strong>.</p>
+    <code>
+private void DrawLayerGrid(LayerBehaviour layerBehaviour, SerializedObject isolatedSerializedObject)
+{
+    isolatedSerializedObject.Update();
+
+    Transform targetTransform = layerBehaviour.transform;
+
+    // Calculates the center point of the layer, and spawns in an interactable grid
+    IReadOnlyList<bool> rawLayerGrid = layerBehaviour.Grid;
+    int gridCenter = GRID_SIZE / 2;
+    float gridOffset = rawLayerGrid.Count % 2 != 0 ? 0.0f : 0.5f;
+    float gridXPositionStart = targetTransform.position.x - gridCenter + gridOffset;
+    float gridYPosition = targetTransform.position.y;
+    float gridZPositionStart = targetTransform.position.z - gridCenter + gridOffset;
+
+    float blockSize = 1f;
+    for (int row = 0; row < GRID_SIZE; row++)
+    {
+        int unwrappedRow = row * GRID_SIZE;
+
+        for(int col = 0; col < GRID_SIZE; col++)
+        {
+            int unwrappedIndex = unwrappedRow + col;
+            Vector3 blockPosition = new Vector3
+            (
+                gridXPositionStart + col,
+                gridYPosition,
+                gridZPositionStart + row
+            );
+
+            // Colors to indicate block states
+            Color resetColor = Handles.color;
+            Handles.color = rawLayerGrid[unwrappedIndex] ? new Color(0f, 1f, 0f, 0.75f) : new Color(1f, 1f, 1f, 0.25f);
+
+            if
+            (
+                Handles.Button
+                (
+                    blockPosition,
+                    Quaternion.identity,
+                    blockSize,
+                    blockSize,
+                    Handles.CubeHandleCap
+                )
+            )
+            {
+                SerializedProperty
+                    grid = isolatedSerializedObject.FindProperty(layerBehaviour.GridReference);
+
+                SerializedProperty block = grid.GetArrayElementAtIndex(unwrappedIndex);
+                block.boolValue = !block.boolValue;
+                if (block.boolValue)
+                {
+                    GameObject newBlock = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    Undo.RegisterCreatedObjectUndo(newBlock, "Materialize grid block");
+
+                    // Simulates a chess board
+                    Material blockMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                    blockMaterial.color = ((unwrappedIndex + row) % 2 == 0) ? Color.white : Color.black;
+                    newBlock.GetComponent<Renderer>().sharedMaterial = blockMaterial;
+
+                    newBlock.transform.parent = layerBehaviour.transform;
+                    newBlock.name = $"Block {unwrappedIndex}";
+                    newBlock.transform.position = blockPosition;
+                }
+                else
+                {
+                    Transform blockTransform = layerBehaviour.transform.Find($"Block {unwrappedIndex}");
+                    if (blockTransform != null)
+                    {
+                        Undo.DestroyObjectImmediate(blockTransform.gameObject);
+                    }
+                }
+
+                isolatedSerializedObject.ApplyModifiedProperties();
+            }
+
+            Handles.color = resetColor;
+        }
+    }
+}
+    </code>
+
+    <h3><img src="../multimedia/youtube_logo.png" alt="Youtube logo">Layer demonstration</h3>
+    <iframe src="https://www.youtube.com/embed/qJOYVKMksT4?si=Fmk_27jNHu7nUZKo" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+</body>
+</html>
