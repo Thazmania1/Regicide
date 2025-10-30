@@ -1,5 +1,7 @@
+using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using static ChunkBehaviour;
 
 [CustomEditor(typeof(ChunkBehaviour))]
 public class ChunkBehaviourEditor : Editor
@@ -22,11 +24,13 @@ public class ChunkBehaviourEditor : Editor
         EditorGUILayout.Space();
 
         // Layer creation logic
-        if (GUILayout.Button("Generate new layer"))
+        if(GUILayout.Button("Generate new layer"))
         {
+            // Creates the empty layer object
             GameObject newLayer = new GameObject();
             Undo.RegisterCreatedObjectUndo(newLayer, "Generated new layer");
             newLayer.transform.parent = chunkManager.transform;
+            newLayer.isStatic = true;
             newLayer.AddComponent<LayerBehaviour>().TranslateHeightPosition();
         }
 

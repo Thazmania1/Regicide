@@ -11,14 +11,22 @@ public class LayerBehaviourEditor : Editor
     {
         Tools.hidden = true;
         SceneView.duringSceneGui += OnGlobalSceneGUI;
+
+        InitializePhysicalGrid();
     }
+    private void OnDisable()
+    {
+        Tools.hidden = false;
+        SceneView.duringSceneGui -= OnGlobalSceneGUI;
+    }
+
 
     public override void OnInspectorGUI()
     {
         LayerBehaviour layerBehaviour = (LayerBehaviour)target; // Only used in single selection cases
 
         // Wouldn't make sense to allow groupal height changes
-        if (targets.Length > 1)
+        if(targets.Length > 1)
         {
             EditorGUILayout.HelpBox("Multi-layer height editing is not allowed.", MessageType.Info);
         }
@@ -35,8 +43,8 @@ public class LayerBehaviourEditor : Editor
 
         EditorGUILayout.Space();
 
-        // Toggles off the entire grid
-        if (GUILayout.Button("Reset grid"))
+        // Resets the selected layer grids
+        if(GUILayout.Button("Reset grid"))
         {
             foreach(var gameObject in targets)
             {
@@ -51,48 +59,39 @@ public class LayerBehaviourEditor : Editor
                 for(int i = 0; i < grid.arraySize; i++)
                 {
                     grid.GetArrayElementAtIndex(i).boolValue = false;
-                    Transform blockTransform = isolatedLayerBehaviour.transform.Find($"Block {i}");
-                    if (blockTransform != null)
-                    {
-                        Undo.DestroyObjectImmediate(blockTransform.gameObject);
-                    }
                 }
+                ResetPhysicalGrid(isolatedLayerBehaviour);
 
                 isolatedSerializedObject.ApplyModifiedProperties();
             }
         }
     }
 
+
     // OnSceneGUI() doesn't support multi-selection on its own so a wrapper is needed
     private void OnGlobalSceneGUI(SceneView sceneView)
     {
-        // Only draws a grid on actual layers, else it would break
-        foreach (var gameObject in targets)
+        // Only draws a grid on actual layers
+        foreach(var gameObject in targets)
         {
             LayerBehaviour layerBehaviour = gameObject as LayerBehaviour;
-            if (layerBehaviour == null) continue;
+            if(layerBehaviour == null) continue;
 
             SerializedObject serializedObject = new SerializedObject(layerBehaviour);
-            DrawLayerGrid(layerBehaviour, serializedObject);
+            DrawHandleGrid(layerBehaviour, serializedObject);
         }
     }
 
-    private void DrawLayerGrid(LayerBehaviour layerBehaviour, SerializedObject isolatedSerializedObject)
+    // Draws an interactable grid to toggle physical blocks on and off
+    private void DrawHandleGrid(LayerBehaviour layerBehaviour, SerializedObject isolatedSerializedObject)
     {
         isolatedSerializedObject.Update();
 
-        Transform targetTransform = layerBehaviour.transform;
-
-        // Calculates the center point of the layer, and spawns in an interactable grid
+        Transform layerTransform = layerBehaviour.transform;
         IReadOnlyList<bool> rawLayerGrid = layerBehaviour.Grid;
-        int gridCenter = GRID_SIZE / 2;
-        float gridOffset = rawLayerGrid.Count % 2 != 0 ? 0.0f : 0.5f;
-        float gridXPositionStart = targetTransform.position.x - gridCenter + gridOffset;
-        float gridYPosition = targetTransform.position.y;
-        float gridZPositionStart = targetTransform.position.z - gridCenter + gridOffset;
-
+        Vector3 gridStartPoint = CalculateGridStartPoint(layerTransform, rawLayerGrid.Count);
         float blockSize = 1f;
-        for (int row = 0; row < GRID_SIZE; row++)
+        for(int row = 0; row < GRID_SIZE; row++)
         {
             int unwrappedRow = row * GRID_SIZE;
 
@@ -101,9 +100,9 @@ public class LayerBehaviourEditor : Editor
                 int unwrappedIndex = unwrappedRow + col;
                 Vector3 blockPosition = new Vector3
                 (
-                    gridXPositionStart + col,
-                    gridYPosition,
-                    gridZPositionStart + row
+                    gridStartPoint.x + col,
+                    gridStartPoint.y,
+                    gridStartPoint.z + row
                 );
 
                 // Colors to indicate block states
@@ -125,30 +124,12 @@ public class LayerBehaviourEditor : Editor
                     SerializedProperty
                         grid = isolatedSerializedObject.FindProperty(layerBehaviour.GridReference);
 
+                    // Toggles the physical block on or off
                     SerializedProperty block = grid.GetArrayElementAtIndex(unwrappedIndex);
                     block.boolValue = !block.boolValue;
-                    if (block.boolValue)
-                    {
-                        GameObject newBlock = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                        Undo.RegisterCreatedObjectUndo(newBlock, "Materialize grid block");
-
-                        // Simulates a chess board
-                        Material blockMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-                        blockMaterial.color = ((unwrappedIndex + row) % 2 == 0) ? Color.white : Color.black;
-                        newBlock.GetComponent<Renderer>().sharedMaterial = blockMaterial;
-
-                        newBlock.transform.parent = layerBehaviour.transform;
-                        newBlock.name = $"Block {unwrappedIndex}";
-                        newBlock.transform.position = blockPosition;
-                    }
-                    else
-                    {
-                        Transform blockTransform = layerBehaviour.transform.Find($"Block {unwrappedIndex}");
-                        if (blockTransform != null)
-                        {
-                            Undo.DestroyObjectImmediate(blockTransform.gameObject);
-                        }
-                    }
+                    GameObject blockObject = layerTransform.GetChild(unwrappedIndex).gameObject;
+                    Undo.RecordObject(blockObject, "Toggle block");
+                    blockObject.SetActive(block.boolValue);
 
                     isolatedSerializedObject.ApplyModifiedProperties();
                 }
@@ -158,9 +139,72 @@ public class LayerBehaviourEditor : Editor
         }
     }
 
-    private void OnDisable()
+    
+    // Checks if the layer's physical grid is initialized
+    private void InitializePhysicalGrid()
     {
-        Tools.hidden = false;
-        SceneView.duringSceneGui -= OnGlobalSceneGUI;
+        foreach (var gameObject in targets)
+        {
+            LayerBehaviour layerBehaviour = gameObject as LayerBehaviour;
+            if (layerBehaviour == null) continue;
+
+            if (layerBehaviour.transform.childCount == 0) ResetPhysicalGrid(layerBehaviour);
+        }
+    }
+
+    // Populates the layer with a grid of physical blocks
+    private void ResetPhysicalGrid(LayerBehaviour layerBehaviour)
+    {
+        Transform layerTransform = layerBehaviour.transform;
+
+        // Destroys the old physical grid
+        // Foreach uses an augmenting index to get elements, deleting children while indexing surprisingly affects foreach
+        while(layerTransform.childCount > 0)
+        {
+            Undo.DestroyObjectImmediate(layerTransform.GetChild(0).gameObject);
+        }
+
+        IReadOnlyList<bool> grid = layerBehaviour.Grid;
+        Vector3 gridStartPoint = CalculateGridStartPoint(layerTransform, grid.Count);
+        for(int row = 0; row < GRID_SIZE; row++)
+        {
+            int unwrappedRow = row * GRID_SIZE;
+
+            for(int col = 0; col < GRID_SIZE; col++)
+            {
+                int unwrappedIndex = unwrappedRow + col;
+                Vector3 blockPosition = new Vector3
+                (
+                    gridStartPoint.x + col,
+                    gridStartPoint.y,
+                    gridStartPoint.z + row
+                );
+
+                GameObject newBlock = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                Undo.RegisterCreatedObjectUndo(newBlock, "Create block");
+
+                // Simulates a chess board
+                Material blockMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+                blockMaterial.color = ((unwrappedIndex + row) % 2 == 0) ? Color.white : Color.black;
+                newBlock.GetComponent<Renderer>().sharedMaterial = blockMaterial;
+
+                newBlock.isStatic = true;
+                newBlock.SetActive(false);
+                newBlock.transform.parent = layerTransform.transform;
+                newBlock.name = $"Block {unwrappedIndex}";
+                newBlock.transform.position = blockPosition;
+            }
+        }
+    }
+
+    public Vector3 CalculateGridStartPoint(Transform layerTransform, int layerGridSize)
+    {
+        int gridCenter = GRID_SIZE / 2;
+        float gridOffset = layerGridSize % 2 != 0 ? 0.0f : 0.5f;
+        float gridXPositionStart = layerTransform.position.x - gridCenter + gridOffset;
+        float gridYPosition = layerTransform.position.y;
+        float gridZPositionStart = layerTransform.position.z - gridCenter + gridOffset;
+
+        return new Vector3(gridXPositionStart, gridYPosition, gridZPositionStart);
     }
 }
