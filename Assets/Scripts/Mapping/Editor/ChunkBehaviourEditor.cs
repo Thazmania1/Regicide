@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using static ChunkBehaviour;
 
 [CustomEditor(typeof(ChunkBehaviour))]
 [CanEditMultipleObjects]
@@ -9,11 +8,10 @@ public class ChunkBehaviourEditor : Editor
 {
     public override void OnInspectorGUI()
     {
-        // Sets up serliazed fields
-        ChunkBehaviour chunkBehaviour = (ChunkBehaviour)target; // Only used in single selection cases
+        ChunkBehaviour chunkBehaviour = target as ChunkBehaviour; // Only used in single selection cases
 
         // Wouldn't make sense to allow groupal position changes or layer generation
-        if(targets.Length > 1)
+        if (targets.Length > 1)
         {
             EditorGUILayout.HelpBox("Multi-chunk position editing and layer generation is not allowed.", MessageType.Info);
         }
@@ -32,9 +30,8 @@ public class ChunkBehaviourEditor : Editor
             EditorGUILayout.Space();
 
             // Layer creation logic
-            if (GUILayout.Button("Generate new layer"))
+            if(GUILayout.Button("Generate new layer"))
             {
-                // Creates the empty layer object
                 GameObject newLayer = new GameObject();
                 Undo.RegisterCreatedObjectUndo(newLayer, "Generated new layer");
                 newLayer.transform.parent = chunkBehaviour.transform;

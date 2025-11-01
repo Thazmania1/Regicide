@@ -23,7 +23,7 @@ public class LayerBehaviourEditor : Editor
 
     public override void OnInspectorGUI()
     {
-        LayerBehaviour layerBehaviour = (LayerBehaviour)target; // Only used in single selection cases
+        LayerBehaviour layerBehaviour = target as LayerBehaviour; // Only used in single selection cases
 
         // Wouldn't make sense to allow groupal height changes
         if(targets.Length > 1)
@@ -148,7 +148,7 @@ public class LayerBehaviourEditor : Editor
             LayerBehaviour layerBehaviour = gameObject as LayerBehaviour;
             if (layerBehaviour == null) continue;
 
-            if (layerBehaviour.transform.childCount == 0) ResetPhysicalGrid(layerBehaviour);
+            if (layerBehaviour.transform.childCount != GRID_SIZE * GRID_SIZE) ResetPhysicalGrid(layerBehaviour);
         }
     }
 
@@ -189,7 +189,7 @@ public class LayerBehaviourEditor : Editor
                 newBlock.GetComponent<Renderer>().sharedMaterial = blockMaterial;
 
                 newBlock.isStatic = true;
-                newBlock.SetActive(false);
+                newBlock.SetActive(grid[unwrappedIndex]);
                 newBlock.transform.parent = layerTransform.transform;
                 newBlock.name = $"Block {unwrappedIndex}";
                 newBlock.transform.position = blockPosition;
