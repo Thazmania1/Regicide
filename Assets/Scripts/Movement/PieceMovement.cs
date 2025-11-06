@@ -5,62 +5,98 @@ using static ChunkBehaviour;
 // Used for individual piece movement patterns
 public abstract class PieceMovement : MonoBehaviour
 {
-    // Tracks a chunk position, a layer, and a block position
-    public class RegicideVector5
+    // Tracks a chunk position, a layer height, and a block position
+    [System.Serializable] public struct PieceCoordinates
     {
-        private Vector2Int _chunk;
-        private int _layer;
-        private Vector2Int _block;
+        [SerializeField] private Vector2Int _chunk;
+        [SerializeField] private int _layer;
+        [SerializeField] private Vector2Int _block;
 
         // Getters and setters
         public Vector2Int Chunk {get => _chunk; set => _chunk = value;}
         public int Layer {get => _layer; set => _layer = value;}
-        public Vector2Int Block {get => _block; set => _block = value;}
+        public Vector2Int WrappedIndexBlock {get => _block; set => _block = value;}
+        public int UnwrappedIndexBlock => _block.x + _block.y * GRID_SIZE;
+
+        // Serialization getters
+        public string ChunkReference => nameof(_chunk);
+        public string LayerReference => nameof(_layer);
+        public string BlockReference => nameof(_block);
     }
 
     // Tracks the piece's current position
-    protected RegicideVector5 _currentPosition;
+    [SerializeField] protected PieceCoordinates _currentCoordinates = new PieceCoordinates();
 
     // Tracks what position is being checked
-    protected RegicideVector5 _checkingPosition;
-
-    // Tracks if the piece is currently moving
-    protected bool _isMoving = false;
-
+    protected PieceCoordinates _checkingCoordinates = new PieceCoordinates();
 
     private void Start()
     {
-        UpdatePiecePosition();
+        TranslatePiecePosition();
         CalculatePieceMoves();
     }
 
-    public void UpdatePiecePosition()
+    // Block parent is based on the piece's current coordinates
+    public bool TranslatePiecePosition()
     {
-        _currentPosition.Chunk = transform.parent.parent.parent.GetComponent<ChunkBehaviour>().ConcatenatingPosition;
-        _currentPosition.Layer = transform.parent.parent.GetComponent<LayerBehaviour>().Height;
+        Transform queriedPosition = FindBlock(_currentCoordinates.Chunk, _currentCoordinates.Layer, _currentCoordinates.UnwrappedIndexBlock);
+        if(queriedPosition == null) return false;
 
-        // Translates the block's index to an X and Z axis position for readability
-        int blockUnwrappedIndex = transform.parent.GetSiblingIndex();
-        int horizon = blockUnwrappedIndex % GRID_SIZE;
-        int depth = blockUnwrappedIndex / GRID_SIZE;
-        _currentPosition.Block = new Vector2Int(horizon, depth);
+        transform.parent = queriedPosition;
+        transform.localPosition = new Vector3(0, 1, 0);
 
         // Resets the pathfinder
-        _checkingPosition = _currentPosition;
+        _checkingCoordinates = _currentCoordinates;
+        return true;
     }
 
-    // The piece's movement possibilities
-    public abstract void CalculatePieceMoves();
-
     // Queries
-    // Unity complains about inline null checks, so queries must explicitly look for null values
     public Transform FindChunk(Vector2Int concatenatingPositionQuery)
     {
-        
         var queriedChunk = transform.root
             .GetComponentsInChildren<ChunkBehaviour>()
             .FirstOrDefault(chunk => chunk != null && chunk.ConcatenatingPosition == concatenatingPositionQuery);
 
         return queriedChunk != null ? queriedChunk.transform : null;
     }
+
+    public Transform FindLayer(Transform chunk, int heightQuery)
+    {
+        var queriedLayer = chunk
+            .GetComponentsInChildren<LayerBehaviour>()
+            .FirstOrDefault(layer => layer != null && layer.Height == heightQuery);
+
+        return queriedLayer != null ? queriedLayer.transform : null;
+    }
+
+    public Transform FindBlock(Transform layer, int unwrappedIndexQuery)
+    {
+        Transform queriedBlock = layer.GetChild(unwrappedIndexQuery);
+        return queriedBlock.gameObject.activeInHierarchy ? queriedBlock : null;
+    }
+
+    public Transform FindBlock(Vector2Int concatenatingPositionQuery, int heightQuery, int unwrappedIndexQuery)
+    {
+        Transform queriedChunk = FindChunk(concatenatingPositionQuery);
+        if(queriedChunk == null) return null;
+
+        Transform queriedLayer = FindLayer(queriedChunk, heightQuery);
+        if(queriedLayer == null) return null;
+
+        Transform queriedBlock = FindBlock(queriedLayer, unwrappedIndexQuery);
+        if(queriedBlock == null) return null;
+
+        return queriedBlock;
+    }
+
+    // The piece's movement possibilities
+    public abstract void CalculatePieceMoves();
+
+
+    // Getters
+    public PieceCoordinates CurrentPosition => _currentCoordinates;
+    public PieceCoordinates CheckingPosition => _checkingCoordinates;
+
+    // Serialization getters
+    public string CurrentPositionReference => nameof(_currentCoordinates);
 }
