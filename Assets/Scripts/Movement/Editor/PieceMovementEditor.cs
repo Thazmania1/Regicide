@@ -33,7 +33,7 @@ public class PieceMovementEditor : Editor
         EditorGUILayout.Space();
 
         EditorGUILayout.BeginVertical("box");
-        EditorGUILayout.PropertyField(currentLayer, new GUIContent("Height"));
+        EditorGUILayout.PropertyField(currentLayer, new GUIContent("Layer"));
         EditorGUILayout.EndVertical();
         EditorGUILayout.Space();
 
