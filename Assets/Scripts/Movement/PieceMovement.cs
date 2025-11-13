@@ -6,11 +6,32 @@ using static ChunkBehaviour;
 public abstract class PieceMovement : MonoBehaviour
 {
     // Tracks a chunk position, a layer height, and a block position
-    [System.Serializable] public struct PieceCoordinates
+    [System.Serializable] public class Coordinates
     {
         [SerializeField] private Vector2Int _chunk;
         [SerializeField] private int _layer;
         [SerializeField] private Vector2Int _block;
+
+        public Coordinates(Vector2Int chunk, int layer, Vector2Int wrappedIndexBlock)
+        {
+            _chunk = chunk;
+            _layer = layer;
+            _block = wrappedIndexBlock;
+        }
+
+        public Coordinates(Vector2Int chunk, int layer, int unwrappedIndexBlock)
+        {
+            _chunk = chunk;
+            _layer = layer;
+            _block = new Vector2Int(unwrappedIndexBlock % GRID_SIZE, unwrappedIndexBlock / GRID_SIZE);
+        }
+
+        public Coordinates() { }
+
+        public Coordinates Clone()
+        {
+            return new Coordinates(_chunk, _layer, _block);
+        }
 
         // Getters and setters
         public Vector2Int Chunk {get => _chunk; set => _chunk = value;}
@@ -25,10 +46,10 @@ public abstract class PieceMovement : MonoBehaviour
     }
 
     // Tracks the piece's current position
-    [SerializeField] protected PieceCoordinates _currentCoordinates = new PieceCoordinates();
+    [SerializeField] protected Coordinates _currentCoordinates = new Coordinates();
 
     // Tracks what position is being checked
-    protected PieceCoordinates _checkingCoordinates = new PieceCoordinates();
+    protected Coordinates _checkingCoordinates = new Coordinates();
 
     private void Start()
     {
@@ -46,7 +67,7 @@ public abstract class PieceMovement : MonoBehaviour
         transform.localPosition = new Vector3(0, 1, 0);
 
         // Resets the pathfinder
-        _checkingCoordinates = _currentCoordinates;
+        _checkingCoordinates = _currentCoordinates.Clone();
         return true;
     }
 
@@ -89,13 +110,27 @@ public abstract class PieceMovement : MonoBehaviour
         return queriedBlock;
     }
 
+    public Transform FindBlock(Coordinates blockCoordinates)
+    {
+        Transform queriedChunk = FindChunk(blockCoordinates.Chunk);
+        if(queriedChunk == null) return null;
+
+        Transform queriedLayer = FindLayer(queriedChunk, blockCoordinates.Layer);
+        if(queriedLayer == null) return null;
+
+        Transform queriedBlock = FindBlock(queriedLayer, blockCoordinates.UnwrappedIndexBlock);
+        if(queriedBlock == null) return null;
+
+        return queriedBlock;
+    }
+
     // The piece's movement possibilities
     public abstract void CalculatePieceMoves();
 
 
     // Getters
-    public PieceCoordinates CurrentPosition => _currentCoordinates;
-    public PieceCoordinates CheckingPosition => _checkingCoordinates;
+    public Coordinates CurrentPosition => _currentCoordinates;
+    public Coordinates CheckingPosition => _checkingCoordinates;
 
     // Serialization getters
     public string CurrentPositionReference => nameof(_currentCoordinates);

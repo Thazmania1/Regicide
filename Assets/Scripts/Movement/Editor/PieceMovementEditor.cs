@@ -9,7 +9,7 @@ public class PieceMovementEditor : Editor
     public override void OnInspectorGUI()
     {
         PieceMovement pieceMovement = target as PieceMovement;
-        PieceCoordinates serializationReference = new PieceCoordinates();
+        Coordinates serializationReference = new Coordinates();
 
 
         serializedObject.Update();

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using static ChunkBehaviour;
 
@@ -11,17 +12,27 @@ public class PlayerMovement : PieceMovement
         BISHOP,
         KNIGHT
     }
-    private PlayerPatterns _currentPattern = PlayerPatterns.KING;
+    private PlayerPatterns _currentPattern = PlayerPatterns.KNIGHT;
+
+    // Tracks which blocks have been made clickable to reset later
+    private List<CheckedBlockBehaviour> _checkedBlocks = new List<CheckedBlockBehaviour>();
 
     public override void CalculatePieceMoves()
     {
+        // Resets the clickable blocks
+        foreach(CheckedBlockBehaviour checkedBlock in _checkedBlocks)
+        {
+            Destroy(checkedBlock);
+        }
+        _checkedBlocks = new List<CheckedBlockBehaviour>();
+
         // Tracks the extended pathfinding of the rook and the bishop's moves
         bool isExtendedPathInterrupted = false;
         Vector3Int extendedPathPosition = new Vector3Int();
 
         switch(_currentPattern)
         {
-            // All adjacent blocks, including height and diagonally from the player's current coordinates (allows branching decision)
+            // Finds all adjacent blocks, including height and diagonally from the player's current coordinates (allows branching decision)
             case PlayerPatterns.KING:
             {
                 for(int height = -1; height <= 1; height++)
@@ -57,16 +68,18 @@ public class PlayerMovement : PieceMovement
 
                             Transform digPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer + 1, _checkingCoordinates.UnwrappedIndexBlock);
                             if(digPosition != null) continue;
-                            Transform queriedPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer, _checkingCoordinates.UnwrappedIndexBlock);
+                            Transform queriedPosition = FindBlock(_checkingCoordinates.Clone());
                             if(queriedPosition == null) continue;
 
-                            queriedPosition.gameObject.AddComponent<AudioSource>();
+                            CheckedBlockBehaviour checkedBlock = queriedPosition.gameObject.AddComponent<CheckedBlockBehaviour>();
+                            checkedBlock.InitializeBlock(ChangePlayerCurrentPosition, _checkingCoordinates.Clone());
+                            _checkedBlocks.Add(checkedBlock);
                         }
                     }
                 }
 
                 // The player shouldn't be able to stay still
-                Destroy(transform.parent.GetComponent<AudioSource>());
+                Destroy(transform.parent.GetComponent<CheckedBlockBehaviour>());
                 break;
             }
 
@@ -99,10 +112,12 @@ public class PlayerMovement : PieceMovement
 
                             Transform digPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer + 1, _checkingCoordinates.UnwrappedIndexBlock);
                             if(digPosition != null) continue;
-                            Transform queriedPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer, _checkingCoordinates.UnwrappedIndexBlock);
+                            Transform queriedPosition = FindBlock(_checkingCoordinates.Clone());
                             if(queriedPosition == null) continue;
 
-                            queriedPosition.gameObject.AddComponent<AudioSource>();
+                            CheckedBlockBehaviour checkedBlock = queriedPosition.gameObject.AddComponent<CheckedBlockBehaviour>();
+                            checkedBlock.InitializeBlock(ChangePlayerCurrentPosition, _checkingCoordinates.Clone());
+                            _checkedBlocks.Add(checkedBlock);
                             extendedPathPosition.y += height;
                             isExtendedPathInterrupted = false;
                             break;
@@ -137,10 +152,12 @@ public class PlayerMovement : PieceMovement
 
                             Transform digPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer + 1, _checkingCoordinates.UnwrappedIndexBlock);
                             if(digPosition != null) continue;
-                            Transform queriedPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer, _checkingCoordinates.UnwrappedIndexBlock);
+                            Transform queriedPosition = FindBlock(_checkingCoordinates.Clone());
                             if(queriedPosition == null) continue;
 
-                            queriedPosition.gameObject.AddComponent<AudioSource>();
+                            CheckedBlockBehaviour checkedBlock = queriedPosition.gameObject.AddComponent<CheckedBlockBehaviour>();
+                            checkedBlock.InitializeBlock(ChangePlayerCurrentPosition, _checkingCoordinates.Clone());
+                            _checkedBlocks.Add(checkedBlock);
                             extendedPathPosition.y += height;
                             isExtendedPathInterrupted = false;
                             break;
@@ -184,10 +201,12 @@ public class PlayerMovement : PieceMovement
 
                                 Transform digPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer + 1, _checkingCoordinates.UnwrappedIndexBlock);
                                 if(digPosition != null) continue;
-                                Transform queriedPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer, _checkingCoordinates.UnwrappedIndexBlock);
+                                Transform queriedPosition = FindBlock(_checkingCoordinates.Clone());
                                 if(queriedPosition == null) continue;
 
-                                queriedPosition.gameObject.AddComponent<AudioSource>();
+                                CheckedBlockBehaviour checkedBlock = queriedPosition.gameObject.AddComponent<CheckedBlockBehaviour>();
+                                checkedBlock.InitializeBlock(ChangePlayerCurrentPosition, _checkingCoordinates.Clone());
+                                _checkedBlocks.Add(checkedBlock);
                                 extendedPathPosition.y += height;
                                 isExtendedPathInterrupted = false;
                                 break;
@@ -224,21 +243,56 @@ public class PlayerMovement : PieceMovement
                                 _currentCoordinates.Chunk.y + Mathf.FloorToInt((float)nextDepthBlock / GRID_SIZE)
                             );
                             int
-                                horizonLShapeRelativeBlock = (_checkingCoordinates.WrappedIndexBlock.x + horizon) % GRID_SIZE + _checkingCoordinates.WrappedIndexBlock.y * GRID_SIZE,
-                                depthLShapeRelativeBlock = _checkingCoordinates.WrappedIndexBlock.x + (_checkingCoordinates.WrappedIndexBlock.y + depth) % GRID_SIZE * GRID_SIZE;
+                                horizonLShapeRelativeBlockUnwrappedIndex = (GRID_SIZE + (_checkingCoordinates.WrappedIndexBlock.x + horizon)) % GRID_SIZE + _checkingCoordinates.WrappedIndexBlock.y * GRID_SIZE,
+                                depthLShapeRelativeBlockUnwrappedIndex = _checkingCoordinates.WrappedIndexBlock.x + (GRID_SIZE + (_checkingCoordinates.WrappedIndexBlock.y + depth)) % GRID_SIZE * GRID_SIZE;
 
-                            Transform digHorizonPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer + 1, horizonLShapeRelativeBlock);
-                            Transform queriedHorizonPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer, horizonLShapeRelativeBlock);
-                            if(digHorizonPosition == null && queriedHorizonPosition != null) queriedHorizonPosition.gameObject.AddComponent<AudioSource>();
+                            Transform digHorizonPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer + 1, horizonLShapeRelativeBlockUnwrappedIndex);
+                            Transform queriedHorizonPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer, horizonLShapeRelativeBlockUnwrappedIndex);
+                            if(digHorizonPosition == null && queriedHorizonPosition != null)
+                            {
+                                CheckedBlockBehaviour checkedHorizonBlock = queriedHorizonPosition.gameObject.AddComponent<CheckedBlockBehaviour>();
+                                checkedHorizonBlock.InitializeBlock
+                                (
+                                    ChangePlayerCurrentPosition,
+                                    new Coordinates
+                                    (
+                                        _checkingCoordinates.Chunk,
+                                        _checkingCoordinates.Layer,
+                                        horizonLShapeRelativeBlockUnwrappedIndex
+                                    )
+                                );
+                                _checkedBlocks.Add(checkedHorizonBlock);
+                            }
                             
-                            Transform digDepthPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer + 1, depthLShapeRelativeBlock);
-                            Transform queriedDepthPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer, depthLShapeRelativeBlock);
-                            if(digDepthPosition == null && queriedDepthPosition != null) queriedDepthPosition.gameObject.AddComponent<AudioSource>();
+                            Transform digDepthPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer + 1, depthLShapeRelativeBlockUnwrappedIndex);
+                            Transform queriedDepthPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer, depthLShapeRelativeBlockUnwrappedIndex);
+                            if(digDepthPosition == null && queriedDepthPosition != null)
+                            {
+                                CheckedBlockBehaviour checkedDepthBlock = queriedDepthPosition.gameObject.AddComponent<CheckedBlockBehaviour>();
+                                checkedDepthBlock.InitializeBlock
+                                (
+                                    ChangePlayerCurrentPosition,
+                                    new Coordinates
+                                    (
+                                        _checkingCoordinates.Chunk,
+                                        _checkingCoordinates.Layer,
+                                        depthLShapeRelativeBlockUnwrappedIndex
+                                    )
+                                );
+                                _checkedBlocks.Add(checkedDepthBlock);
+                            }
                         }
                     }
                 }
                 break;
             }
         }
+    }
+
+    public void ChangePlayerCurrentPosition(Coordinates blockCoordinates)
+    {
+        _currentCoordinates = blockCoordinates;
+        TranslatePiecePosition();
+        CalculatePieceMoves();
     }
 }
