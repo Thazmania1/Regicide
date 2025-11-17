@@ -43,7 +43,7 @@ public class LayerBehaviourEditor : Editor
 
         EditorGUILayout.Space();
 
-        // Resets the selected layer grids
+        // Resets the selected layers' grids
         if(GUILayout.Button("Reset grid"))
         {
             foreach(var gameObject in targets)
@@ -60,9 +60,8 @@ public class LayerBehaviourEditor : Editor
                 {
                     grid.GetArrayElementAtIndex(i).boolValue = false;
                 }
-                ResetPhysicalGrid(isolatedLayerBehaviour);
-
                 isolatedSerializedObject.ApplyModifiedProperties();
+                ResetPhysicalGrid(isolatedLayerBehaviour);
             }
         }
     }

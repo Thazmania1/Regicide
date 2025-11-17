@@ -55,7 +55,7 @@ public class ChunkBehaviourEditor : Editor
 
                 // Collects valid LayerBehaviour children
                 List<LayerBehaviour> layers = new List<LayerBehaviour>();
-                HashSet<float> seenLayers = new HashSet<float>();
+                HashSet<int> seenLayers = new HashSet<int>();
 
                 // Tracks duplicate layer heights
                 List<LayerBehaviour> duplicatedLayers = new List<LayerBehaviour>();

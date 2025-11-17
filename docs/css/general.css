@@ -90,6 +90,11 @@ code a
 {
     color: inherit;
 }
+code strong
+{
+    color: rgb(0, 0, 0);
+    background-color: rgb(255, 255, 0);
+}
 
 img
 {

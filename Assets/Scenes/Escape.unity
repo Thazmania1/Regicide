@@ -2928,7 +2928,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2045426494}
+  m_Father: {fileID: 1994494180}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &100930842
 MonoBehaviour:
@@ -2944,8 +2944,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _currentCoordinates:
     _chunk: {x: 0, y: 0}
-    _layer: 0
-    _block: {x: 3, y: 2}
+    _layer: 2
+    _block: {x: 3, y: 6}
+  _currentPattern: 1
 --- !u!135 &100930843
 SphereCollider:
   m_ObjectHideFlags: 0
@@ -6772,7 +6773,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: be5785f7e44a3aa42b225e3a74c1922e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _target: {fileID: 100930841}
+  _pieceTarget: {fileID: 100930841}
 --- !u!21 &333836506
 Material:
   serializedVersion: 8
@@ -41912,7 +41913,8 @@ Transform:
   m_LocalPosition: {x: -0.5, y: 0, z: 2.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 100930841}
   m_Father: {fileID: 1256829486}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &1994494181
@@ -42824,8 +42826,7 @@ Transform:
   m_LocalPosition: {x: -0.5, y: 0, z: -1.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 100930841}
+  m_Children: []
   m_Father: {fileID: 1340493859}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &2045426495

@@ -4,7 +4,7 @@ using static ChunkBehaviour;
 
 public class PlayerMovement : PieceMovement
 {
-    // Decides what moves the player can make
+    // The player's movement patterns
     private enum PlayerPatterns
     {
         KING,
@@ -12,7 +12,7 @@ public class PlayerMovement : PieceMovement
         BISHOP,
         KNIGHT
     }
-    private PlayerPatterns _currentPattern = PlayerPatterns.KNIGHT;
+    [SerializeField] private PlayerPatterns _currentPattern = PlayerPatterns.KNIGHT;
 
     // Tracks which blocks have been made clickable to reset later
     private List<CheckedBlockBehaviour> _checkedBlocks = new List<CheckedBlockBehaviour>();
@@ -295,4 +295,7 @@ public class PlayerMovement : PieceMovement
         TranslatePiecePosition();
         CalculatePieceMoves();
     }
+
+    // Serialization getters
+    public string CurrentPatternReference => nameof(_currentPattern);
 }
