@@ -19,13 +19,6 @@ public class PlayerMovement : PieceMovement
 
     public override void CalculatePieceMoves()
     {
-        // Resets the clickable blocks
-        foreach(CheckedBlockBehaviour checkedBlock in _checkedBlocks)
-        {
-            Destroy(checkedBlock);
-        }
-        _checkedBlocks = new List<CheckedBlockBehaviour>();
-
         // Tracks the extended pathfinding of the rook and the bishop's moves
         bool isExtendedPathInterrupted = false;
         Vector3Int extendedPathPosition = new Vector3Int();
@@ -246,8 +239,20 @@ public class PlayerMovement : PieceMovement
                                 horizonLShapeRelativeBlockUnwrappedIndex = (GRID_SIZE + (_checkingCoordinates.WrappedIndexBlock.x + horizon)) % GRID_SIZE + _checkingCoordinates.WrappedIndexBlock.y * GRID_SIZE,
                                 depthLShapeRelativeBlockUnwrappedIndex = _checkingCoordinates.WrappedIndexBlock.x + (GRID_SIZE + (_checkingCoordinates.WrappedIndexBlock.y + depth)) % GRID_SIZE * GRID_SIZE;
 
-                            Transform digHorizonPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer + 1, horizonLShapeRelativeBlockUnwrappedIndex);
-                            Transform queriedHorizonPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer, horizonLShapeRelativeBlockUnwrappedIndex);
+                            Vector2Int
+                                horizonLShapeChunk = new Vector2Int
+                                (
+                                    _checkingCoordinates.Chunk.x + Mathf.FloorToInt((float)(_checkingCoordinates.WrappedIndexBlock.x + horizon) / GRID_SIZE),
+                                    _checkingCoordinates.Chunk.y
+                                ),
+                                depthLShapeChunk = new Vector2Int
+                                (
+                                    _checkingCoordinates.Chunk.x,
+                                    _checkingCoordinates.Chunk.y + Mathf.FloorToInt((float)(_checkingCoordinates.WrappedIndexBlock.y + depth) / GRID_SIZE)
+                                );
+
+                            Transform digHorizonPosition = FindBlock(horizonLShapeChunk, _checkingCoordinates.Layer + 1, horizonLShapeRelativeBlockUnwrappedIndex);
+                            Transform queriedHorizonPosition = FindBlock(horizonLShapeChunk, _checkingCoordinates.Layer, horizonLShapeRelativeBlockUnwrappedIndex);
                             if(digHorizonPosition == null && queriedHorizonPosition != null)
                             {
                                 CheckedBlockBehaviour checkedHorizonBlock = queriedHorizonPosition.gameObject.AddComponent<CheckedBlockBehaviour>();
@@ -256,7 +261,7 @@ public class PlayerMovement : PieceMovement
                                     ChangePlayerCurrentPosition,
                                     new Coordinates
                                     (
-                                        _checkingCoordinates.Chunk,
+                                        horizonLShapeChunk,
                                         _checkingCoordinates.Layer,
                                         horizonLShapeRelativeBlockUnwrappedIndex
                                     )
@@ -264,8 +269,8 @@ public class PlayerMovement : PieceMovement
                                 _checkedBlocks.Add(checkedHorizonBlock);
                             }
                             
-                            Transform digDepthPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer + 1, depthLShapeRelativeBlockUnwrappedIndex);
-                            Transform queriedDepthPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer, depthLShapeRelativeBlockUnwrappedIndex);
+                            Transform digDepthPosition = FindBlock(depthLShapeChunk, _checkingCoordinates.Layer + 1, depthLShapeRelativeBlockUnwrappedIndex);
+                            Transform queriedDepthPosition = FindBlock(depthLShapeChunk, _checkingCoordinates.Layer, depthLShapeRelativeBlockUnwrappedIndex);
                             if(digDepthPosition == null && queriedDepthPosition != null)
                             {
                                 CheckedBlockBehaviour checkedDepthBlock = queriedDepthPosition.gameObject.AddComponent<CheckedBlockBehaviour>();
@@ -274,7 +279,7 @@ public class PlayerMovement : PieceMovement
                                     ChangePlayerCurrentPosition,
                                     new Coordinates
                                     (
-                                        _checkingCoordinates.Chunk,
+                                        depthLShapeChunk,
                                         _checkingCoordinates.Layer,
                                         depthLShapeRelativeBlockUnwrappedIndex
                                     )
@@ -293,7 +298,23 @@ public class PlayerMovement : PieceMovement
     {
         _currentCoordinates = blockCoordinates;
         TranslatePiecePosition();
-        CalculatePieceMoves();
+
+        // Resets the clickable blocks
+        foreach(CheckedBlockBehaviour checkedBlock in _checkedBlocks)
+        {
+            Destroy(checkedBlock);
+        }
+        _checkedBlocks = new List<CheckedBlockBehaviour>();
+
+        GridManager gridManager = transform.root.GetComponent<GridManager>();
+        if(gridManager.IsChunkMatchBoard(_currentCoordinates.Chunk) && gridManager.CurrentMatchBoardChunks.Count == 0)
+        {
+            gridManager.BeginMatch(_currentCoordinates.Chunk);
+        }
+        else
+        {
+            CalculatePieceMoves();
+        }
     }
 
     // Serialization getters

@@ -1,7 +1,11 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public class ChunkBehaviour : MonoBehaviour
 {
+    // Defines if the chunk is a match board
+    [SerializeField] private bool _isMatchBoard = false;
+
     // Transform world position is based on the concatenating positions multiplied by the grid size
     public const int GRID_SIZE = 8;
     [SerializeField] private Vector2Int _concatenatingPosition = new Vector2Int(0, 0);
@@ -12,9 +16,47 @@ public class ChunkBehaviour : MonoBehaviour
         transform.position = new Vector3Int(concatenatingXPosition * GRID_SIZE, 0, concatenatingYPosition * GRID_SIZE);
     }
 
+    // Returns a corner point of a chunk or a layer
+    public static Vector3 CalculateChunkCorner(Transform chunkOrLayer, bool isHorizonNegative = true, bool isDepthNegative = true, bool hasOffset = true)
+    {
+        int horizonNegation = -1, depthNegation = -1;
+        if(!isHorizonNegative) horizonNegation *= -1;
+        if(!isDepthNegative) depthNegation *= -1;
+
+        int gridCenter = Mathf.FloorToInt((float)GRID_SIZE / 2);
+        float gridOffset = GRID_SIZE % 2 != 0 ? 0.0f : 0.5f;
+        float gridXCorner = chunkOrLayer.position.x + gridCenter * horizonNegation;
+        float gridZCorner = chunkOrLayer.position.z + gridCenter * depthNegation;
+        float gridYPosition = chunkOrLayer.position.y;
+        if(hasOffset)
+        {
+            gridXCorner += gridOffset;
+            gridZCorner += gridOffset;
+        }
+
+        return new Vector3(gridXCorner, gridYPosition, gridZCorner);
+    }
+    public static Vector3 CalculateChunkCorner(Transform chunkOrLayer, int horizonNegation, int depthNegation, bool hasOffset = true)
+    {
+        int gridCenter = Mathf.FloorToInt((float)GRID_SIZE / 2);
+        float gridOffset = GRID_SIZE % 2 != 0 ? 0.0f : 0.5f;
+        float gridXCorner = chunkOrLayer.position.x + gridCenter * horizonNegation;
+        float gridZCorner = chunkOrLayer.position.z + gridCenter * depthNegation;
+        float gridYPosition = chunkOrLayer.position.y;
+        if(hasOffset)
+        {
+            gridXCorner += gridOffset;
+            gridZCorner += gridOffset;
+        }
+
+        return new Vector3(gridXCorner, gridYPosition, gridZCorner);
+    }
+
     // Getters
+    public bool IsMatchBoard => _isMatchBoard;
     public Vector2Int ConcatenatingPosition => _concatenatingPosition;
 
     // Serialization getters
+    public string IsMatchBoardReference => nameof(_isMatchBoard);
     public string ConcatenatingPositionReference => nameof(_concatenatingPosition);
 }

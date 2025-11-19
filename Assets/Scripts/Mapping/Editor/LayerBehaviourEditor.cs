@@ -88,7 +88,7 @@ public class LayerBehaviourEditor : Editor
 
         Transform layerTransform = layerBehaviour.transform;
         IReadOnlyList<bool> rawLayerGrid = layerBehaviour.Grid;
-        Vector3 gridStartPoint = CalculateGridStartPoint(layerTransform, rawLayerGrid.Count);
+        Vector3 gridStartPoint = CalculateChunkCorner(layerTransform);
         float blockSize = 1f;
         for(int row = 0; row < GRID_SIZE; row++)
         {
@@ -164,7 +164,7 @@ public class LayerBehaviourEditor : Editor
         }
 
         IReadOnlyList<bool> grid = layerBehaviour.Grid;
-        Vector3 gridStartPoint = CalculateGridStartPoint(layerTransform, grid.Count);
+        Vector3 gridStartPoint = CalculateChunkCorner(layerTransform);
         for(int row = 0; row < GRID_SIZE; row++)
         {
             int unwrappedRow = row * GRID_SIZE;
@@ -194,16 +194,5 @@ public class LayerBehaviourEditor : Editor
                 newBlock.transform.position = blockPosition;
             }
         }
-    }
-
-    public Vector3 CalculateGridStartPoint(Transform layerTransform, int layerGridSize)
-    {
-        int gridCenter = GRID_SIZE / 2;
-        float gridOffset = layerGridSize % 2 != 0 ? 0.0f : 0.5f;
-        float gridXPositionStart = layerTransform.position.x - gridCenter + gridOffset;
-        float gridYPosition = layerTransform.position.y;
-        float gridZPositionStart = layerTransform.position.z - gridCenter + gridOffset;
-
-        return new Vector3(gridXPositionStart, gridYPosition, gridZPositionStart);
     }
 }
