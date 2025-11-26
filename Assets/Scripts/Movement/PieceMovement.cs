@@ -33,6 +33,25 @@ public abstract class PieceMovement : MonoBehaviour
             return new Coordinates(_chunk, _layer, _block);
         }
 
+        // For coordinate distance comparisions
+        public Vector3Int ToWorldPosition3D()
+        {
+            return new Vector3Int
+            (
+                _chunk.x * GRID_SIZE + _block.x,
+                _layer,
+                _chunk.y * GRID_SIZE + _block.y
+            );
+        }
+        public Vector2Int ToWorldPosition2D()
+        {
+            return new Vector2Int
+            (
+                _chunk.x * GRID_SIZE + _block.x,
+                _chunk.y * GRID_SIZE + _block.y
+            );
+        }
+
         // Getters and setters
         public Vector2Int Chunk {get => _chunk; set => _chunk = value;}
         public int Layer {get => _layer; set => _layer = value;}
@@ -48,11 +67,19 @@ public abstract class PieceMovement : MonoBehaviour
     // Tracks the piece's current position
     [SerializeField] protected Coordinates _currentCoordinates = new Coordinates();
 
+    // Tracks the last position the piece was on before a match
+    protected Coordinates _preMatchCoordinates = new Coordinates();
+
     // Tracks what position is being checked
     protected Coordinates _checkingCoordinates = new Coordinates();
 
+    // Reference to the piece's grid manager
+    protected GridManager _gridManager;
+
+
     private void Start()
     {
+        _gridManager = transform.root.GetComponent<GridManager>();
         TranslatePiecePosition();
         CalculatePieceMoves();
     }
@@ -60,10 +87,10 @@ public abstract class PieceMovement : MonoBehaviour
     // Block parent is based on the piece's current coordinates
     public bool TranslatePiecePosition()
     {
-        Transform queriedPosition = FindBlock(_currentCoordinates.Chunk, _currentCoordinates.Layer, _currentCoordinates.UnwrappedIndexBlock);
-        if(queriedPosition == null) return false;
+        Transform queriedBlock = FindBlock(_currentCoordinates.Chunk, _currentCoordinates.Layer, _currentCoordinates.UnwrappedIndexBlock);
+        if(queriedBlock == null) return false;
 
-        transform.parent = queriedPosition;
+        transform.parent = queriedBlock;
         transform.localPosition = new Vector3(0, 1, 0);
 
         // Resets the pathfinder
@@ -127,11 +154,17 @@ public abstract class PieceMovement : MonoBehaviour
     // The piece's movement possibilities
     public abstract void CalculatePieceMoves();
 
+    // If two pieces are on the same coordinates, the invoker of this method will destroy the provided piece
+    public void TakePiece(PieceMovement piece)
+    {
+        Coordinates pieceCoordinates = piece.CurrentCoordinates;
+        if(_currentCoordinates.Chunk == pieceCoordinates.Chunk && _currentCoordinates.Layer == pieceCoordinates.Layer && _currentCoordinates.UnwrappedIndexBlock == pieceCoordinates.UnwrappedIndexBlock) piece.gameObject.SetActive(false);
+    }
 
-    // Getters
-    public Coordinates CurrentPosition => _currentCoordinates;
-    public Coordinates CheckingPosition => _checkingCoordinates;
+    // Getters and setters
+    public Coordinates CurrentCoordinates {get => _currentCoordinates.Clone(); set { _currentCoordinates = value; TranslatePiecePosition(); }}
+    public Coordinates PreMatchCoordinates => _preMatchCoordinates.Clone();
 
     // Serialization getters
-    public string CurrentPositionReference => nameof(_currentCoordinates);
+    public string CurrentCoordinatesReference => nameof(_currentCoordinates);
 }

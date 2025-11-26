@@ -32,6 +32,7 @@ public class LayerBehaviourEditor : Editor
         }
         else
         {
+            EditorGUILayout.BeginVertical("box");
             serializedObject.Update();
 
             SerializedProperty height = serializedObject.FindProperty(layerBehaviour.HeightReference);
@@ -39,11 +40,11 @@ public class LayerBehaviourEditor : Editor
 
             serializedObject.ApplyModifiedProperties();
             layerBehaviour.TranslateHeightPosition();
+            EditorGUILayout.EndVertical();
         }
 
-        EditorGUILayout.Space();
-
         // Resets the selected layers' grids
+        EditorGUILayout.BeginVertical("box");
         if(GUILayout.Button("Reset grid"))
         {
             foreach(var gameObject in targets)
@@ -64,6 +65,7 @@ public class LayerBehaviourEditor : Editor
                 ResetPhysicalGrid(isolatedLayerBehaviour);
             }
         }
+        EditorGUILayout.EndVertical();
     }
 
 

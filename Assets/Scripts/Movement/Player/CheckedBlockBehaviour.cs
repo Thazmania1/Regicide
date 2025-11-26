@@ -24,4 +24,7 @@ public class CheckedBlockBehaviour : MonoBehaviour
         _onBlockClicked = clickEvent;
         _blockCoordinates = blockCoordinates;
     }
+
+    // Getters
+    public Coordinates BlockCoordinates => _blockCoordinates.Clone();
 }

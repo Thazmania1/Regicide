@@ -15,7 +15,7 @@ public class PieceMovementEditor : Editor
         serializedObject.Update();
 
         SerializedProperty
-            currentPosition = serializedObject.FindProperty(pieceMovement.CurrentPositionReference);
+            currentPosition = serializedObject.FindProperty(pieceMovement.CurrentCoordinatesReference);
 
         SerializedProperty
             currentChunk = currentPosition.FindPropertyRelative(serializationReference.ChunkReference),

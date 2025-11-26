@@ -5,14 +5,14 @@ using static ChunkBehaviour;
 public class PlayerMovement : PieceMovement
 {
     // The player's movement patterns
-    private enum PlayerPatterns
+    private enum PlayerPattern
     {
         KING,
         ROOK,
         BISHOP,
         KNIGHT
     }
-    [SerializeField] private PlayerPatterns _currentPattern = PlayerPatterns.KNIGHT;
+    [SerializeField] private PlayerPattern _currentPattern = PlayerPattern.KNIGHT;
 
     // Tracks which blocks have been made clickable to reset later
     private List<CheckedBlockBehaviour> _checkedBlocks = new List<CheckedBlockBehaviour>();
@@ -22,11 +22,12 @@ public class PlayerMovement : PieceMovement
         // Tracks the extended pathfinding of the rook and the bishop's moves
         bool isExtendedPathInterrupted = false;
         Vector3Int extendedPathPosition = new Vector3Int();
+        bool isBlockedByPiece = false;
 
         switch(_currentPattern)
         {
             // Finds all adjacent blocks, including height and diagonally from the player's current coordinates (allows branching decision)
-            case PlayerPatterns.KING:
+            case PlayerPattern.KING:
             {
                 for(int height = -1; height <= 1; height++)
                 {
@@ -65,7 +66,7 @@ public class PlayerMovement : PieceMovement
                             if(queriedPosition == null) continue;
 
                             CheckedBlockBehaviour checkedBlock = queriedPosition.gameObject.AddComponent<CheckedBlockBehaviour>();
-                            checkedBlock.InitializeBlock(ChangePlayerCurrentPosition, _checkingCoordinates.Clone());
+                            checkedBlock.InitializeBlock(PlayMove, _checkingCoordinates.Clone());
                             _checkedBlocks.Add(checkedBlock);
                         }
                     }
@@ -77,11 +78,12 @@ public class PlayerMovement : PieceMovement
             }
 
             // Finds a maximum of GRID_SIZE blocks towards all sides from the player's current position (follows the highest block in branch situations)
-            case PlayerPatterns.ROOK:
+            case PlayerPattern.ROOK:
             {
                 for(int horizon = -1; horizon <= 1; horizon += 2)
                 {
                     isExtendedPathInterrupted = false;
+                    isBlockedByPiece = false;
                     extendedPathPosition = new Vector3Int(horizon, _currentCoordinates.Layer, 0);
                     while(!isExtendedPathInterrupted && extendedPathPosition.x % (GRID_SIZE + 1) != 0)
                     {
@@ -107,12 +109,14 @@ public class PlayerMovement : PieceMovement
                             if(digPosition != null) continue;
                             Transform queriedPosition = FindBlock(_checkingCoordinates.Clone());
                             if(queriedPosition == null) continue;
+                            PieceMovement piece = queriedPosition.GetComponentInChildren<PieceMovement>();
+                            if(piece != null) isBlockedByPiece = true;
 
                             CheckedBlockBehaviour checkedBlock = queriedPosition.gameObject.AddComponent<CheckedBlockBehaviour>();
-                            checkedBlock.InitializeBlock(ChangePlayerCurrentPosition, _checkingCoordinates.Clone());
+                            checkedBlock.InitializeBlock(PlayMove, _checkingCoordinates.Clone());
                             _checkedBlocks.Add(checkedBlock);
                             extendedPathPosition.y += height;
-                            isExtendedPathInterrupted = false;
+                            isExtendedPathInterrupted = isBlockedByPiece;
                             break;
                         }
                         extendedPathPosition.x += horizon * 1;
@@ -122,6 +126,7 @@ public class PlayerMovement : PieceMovement
                 for(int depth = -1; depth <= 1; depth += 2)
                 {
                     isExtendedPathInterrupted = false;
+                    isBlockedByPiece = false;
                     extendedPathPosition = new Vector3Int(0, _currentCoordinates.Layer, depth);
                     while(!isExtendedPathInterrupted && extendedPathPosition.z % (GRID_SIZE + 1) != 0)
                     {
@@ -147,12 +152,14 @@ public class PlayerMovement : PieceMovement
                             if(digPosition != null) continue;
                             Transform queriedPosition = FindBlock(_checkingCoordinates.Clone());
                             if(queriedPosition == null) continue;
+                            PieceMovement piece = queriedPosition.GetComponentInChildren<PieceMovement>();
+                            if(piece != null) isBlockedByPiece = true;
 
                             CheckedBlockBehaviour checkedBlock = queriedPosition.gameObject.AddComponent<CheckedBlockBehaviour>();
-                            checkedBlock.InitializeBlock(ChangePlayerCurrentPosition, _checkingCoordinates.Clone());
+                            checkedBlock.InitializeBlock(PlayMove, _checkingCoordinates.Clone());
                             _checkedBlocks.Add(checkedBlock);
                             extendedPathPosition.y += height;
-                            isExtendedPathInterrupted = false;
+                            isExtendedPathInterrupted = isBlockedByPiece;
                             break;
                         }
                         extendedPathPosition.z += depth * 1;
@@ -162,13 +169,14 @@ public class PlayerMovement : PieceMovement
             }
 
             // Finds a maximum of GRID_SIZE blocks towards all corners from the player's current position (follows the highest block in branch situations)
-            case PlayerPatterns.BISHOP:
+            case PlayerPattern.BISHOP:
             {
                 for(int horizon = -1; horizon <= 1; horizon += 2)
                 {
                     for(int depth = -1; depth <= 1; depth += 2)
                     {
                         isExtendedPathInterrupted = false;
+                        isBlockedByPiece = false;
                         extendedPathPosition = new Vector3Int(horizon, _currentCoordinates.Layer, depth);
                         while(!isExtendedPathInterrupted && extendedPathPosition.z % (GRID_SIZE + 1) != 0)
                         {
@@ -196,12 +204,14 @@ public class PlayerMovement : PieceMovement
                                 if(digPosition != null) continue;
                                 Transform queriedPosition = FindBlock(_checkingCoordinates.Clone());
                                 if(queriedPosition == null) continue;
+                                PieceMovement piece = queriedPosition.GetComponentInChildren<PieceMovement>();
+                                if(piece != null) isBlockedByPiece = true;
 
                                 CheckedBlockBehaviour checkedBlock = queriedPosition.gameObject.AddComponent<CheckedBlockBehaviour>();
-                                checkedBlock.InitializeBlock(ChangePlayerCurrentPosition, _checkingCoordinates.Clone());
+                                checkedBlock.InitializeBlock(PlayMove, _checkingCoordinates.Clone());
                                 _checkedBlocks.Add(checkedBlock);
                                 extendedPathPosition.y += height;
-                                isExtendedPathInterrupted = false;
+                                isExtendedPathInterrupted = isBlockedByPiece;
                                 break;
                             }
                             extendedPathPosition.x += horizon * 1;
@@ -213,78 +223,59 @@ public class PlayerMovement : PieceMovement
             }
 
             // Finds blocks in an L shape just like regular chess, but it also allows to make jumps up to 3 layers of height (allows going through blocks)
-            case PlayerPatterns.KNIGHT:
+            case PlayerPattern.KNIGHT:
             {
                 for(int height = -3; height <= 3; height++)
                 {
                     _checkingCoordinates.Layer = _currentCoordinates.Layer + height;
+
                     for(int horizon = -1; horizon <= 1; horizon += 2)
                     {
                         for(int depth = -1; depth <= 1; depth += 2)
                         {
-                            int
-                                nextHorizonBlock = _currentCoordinates.WrappedIndexBlock.x + horizon,
-                                nextDepthBlock = _currentCoordinates.WrappedIndexBlock.y + depth;
+                            Vector2Int nextBlock = new Vector2Int
+                            (
+                                _currentCoordinates.WrappedIndexBlock.x + horizon,
+                                _currentCoordinates.WrappedIndexBlock.y + depth
+                            );
+
                             _checkingCoordinates.WrappedIndexBlock = new Vector2Int
                             (
-                                (nextHorizonBlock + GRID_SIZE) % GRID_SIZE,
-                                (nextDepthBlock + GRID_SIZE) % GRID_SIZE
+                                (nextBlock.x + GRID_SIZE) % GRID_SIZE,
+                                (nextBlock.y + GRID_SIZE) % GRID_SIZE
                             );
+
                             _checkingCoordinates.Chunk = new Vector2Int
                             (
-                                _currentCoordinates.Chunk.x + Mathf.FloorToInt((float)nextHorizonBlock / GRID_SIZE),
-                                _currentCoordinates.Chunk.y + Mathf.FloorToInt((float)nextDepthBlock / GRID_SIZE)
+                                _currentCoordinates.Chunk.x + Mathf.FloorToInt((float)nextBlock.x / GRID_SIZE),
+                                _currentCoordinates.Chunk.y + Mathf.FloorToInt((float)nextBlock.y / GRID_SIZE)
                             );
-                            int
-                                horizonLShapeRelativeBlockUnwrappedIndex = (GRID_SIZE + (_checkingCoordinates.WrappedIndexBlock.x + horizon)) % GRID_SIZE + _checkingCoordinates.WrappedIndexBlock.y * GRID_SIZE,
-                                depthLShapeRelativeBlockUnwrappedIndex = _checkingCoordinates.WrappedIndexBlock.x + (GRID_SIZE + (_checkingCoordinates.WrappedIndexBlock.y + depth)) % GRID_SIZE * GRID_SIZE;
 
-                            Vector2Int
-                                horizonLShapeChunk = new Vector2Int
+                            // Avoids code redundancy
+                            foreach(Vector2Int direction in new Vector2Int[] { new Vector2Int(horizon, 0), new Vector2Int(0, depth) })
+                            {
+                                int relativeBlockUnwrappedIndex =
+                                    (GRID_SIZE + (_checkingCoordinates.WrappedIndexBlock.x + direction.x)) % GRID_SIZE
+                                    + (GRID_SIZE + (_checkingCoordinates.WrappedIndexBlock.y + direction.y)) % GRID_SIZE * GRID_SIZE;
+
+                                Vector2Int lShapeChunk = new Vector2Int
                                 (
-                                    _checkingCoordinates.Chunk.x + Mathf.FloorToInt((float)(_checkingCoordinates.WrappedIndexBlock.x + horizon) / GRID_SIZE),
-                                    _checkingCoordinates.Chunk.y
-                                ),
-                                depthLShapeChunk = new Vector2Int
-                                (
-                                    _checkingCoordinates.Chunk.x,
-                                    _checkingCoordinates.Chunk.y + Mathf.FloorToInt((float)(_checkingCoordinates.WrappedIndexBlock.y + depth) / GRID_SIZE)
+                                    _checkingCoordinates.Chunk.x + Mathf.FloorToInt((float)(_checkingCoordinates.WrappedIndexBlock.x + direction.x) / GRID_SIZE),
+                                    _checkingCoordinates.Chunk.y + Mathf.FloorToInt((float)(_checkingCoordinates.WrappedIndexBlock.y + direction.y) / GRID_SIZE)
                                 );
 
-                            Transform digHorizonPosition = FindBlock(horizonLShapeChunk, _checkingCoordinates.Layer + 1, horizonLShapeRelativeBlockUnwrappedIndex);
-                            Transform queriedHorizonPosition = FindBlock(horizonLShapeChunk, _checkingCoordinates.Layer, horizonLShapeRelativeBlockUnwrappedIndex);
-                            if(digHorizonPosition == null && queriedHorizonPosition != null)
-                            {
-                                CheckedBlockBehaviour checkedHorizonBlock = queriedHorizonPosition.gameObject.AddComponent<CheckedBlockBehaviour>();
-                                checkedHorizonBlock.InitializeBlock
+                                Transform digPosition = FindBlock(lShapeChunk, _checkingCoordinates.Layer + 1, relativeBlockUnwrappedIndex);
+                                if(digPosition != null) continue;
+                                Transform queriedPosition = FindBlock(lShapeChunk, _checkingCoordinates.Layer, relativeBlockUnwrappedIndex);
+                                if(queriedPosition == null) continue;
+
+                                CheckedBlockBehaviour checkedBlock = queriedPosition.gameObject.AddComponent<CheckedBlockBehaviour>();
+                                checkedBlock.InitializeBlock
                                 (
-                                    ChangePlayerCurrentPosition,
-                                    new Coordinates
-                                    (
-                                        horizonLShapeChunk,
-                                        _checkingCoordinates.Layer,
-                                        horizonLShapeRelativeBlockUnwrappedIndex
-                                    )
+                                    PlayMove,
+                                    new Coordinates(lShapeChunk, _checkingCoordinates.Layer, relativeBlockUnwrappedIndex)
                                 );
-                                _checkedBlocks.Add(checkedHorizonBlock);
-                            }
-                            
-                            Transform digDepthPosition = FindBlock(depthLShapeChunk, _checkingCoordinates.Layer + 1, depthLShapeRelativeBlockUnwrappedIndex);
-                            Transform queriedDepthPosition = FindBlock(depthLShapeChunk, _checkingCoordinates.Layer, depthLShapeRelativeBlockUnwrappedIndex);
-                            if(digDepthPosition == null && queriedDepthPosition != null)
-                            {
-                                CheckedBlockBehaviour checkedDepthBlock = queriedDepthPosition.gameObject.AddComponent<CheckedBlockBehaviour>();
-                                checkedDepthBlock.InitializeBlock
-                                (
-                                    ChangePlayerCurrentPosition,
-                                    new Coordinates
-                                    (
-                                        depthLShapeChunk,
-                                        _checkingCoordinates.Layer,
-                                        depthLShapeRelativeBlockUnwrappedIndex
-                                    )
-                                );
-                                _checkedBlocks.Add(checkedDepthBlock);
+                                _checkedBlocks.Add(checkedBlock);
                             }
                         }
                     }
@@ -292,11 +283,30 @@ public class PlayerMovement : PieceMovement
                 break;
             }
         }
+        
+        // Filters out non-match board chunks
+        if(!_gridManager.IsMatchActive) return;
+
+        IReadOnlyList<ChunkBehaviour> matchBoard = _gridManager.CurrentMatchBoardChunks;
+        foreach(CheckedBlockBehaviour checkedBlockBehaviour in _checkedBlocks)
+        {
+            bool isInMatchBoard = false;
+            foreach(ChunkBehaviour chunk in matchBoard)
+            {
+                if(chunk.ConcatenatingPosition == checkedBlockBehaviour.BlockCoordinates.Chunk)
+                {
+                    isInMatchBoard = true;
+                    break;
+                }
+            }
+            if(!isInMatchBoard) Destroy(checkedBlockBehaviour);
+        }
     }
 
-    public void ChangePlayerCurrentPosition(Coordinates blockCoordinates)
+    protected void PlayMove(Coordinates blockCoordinates)
     {
-        _currentCoordinates = blockCoordinates;
+        if(!_gridManager.IsMatchActive) _preMatchCoordinates = _currentCoordinates.Clone();
+        _currentCoordinates = blockCoordinates.Clone();
         TranslatePiecePosition();
 
         // Resets the clickable blocks
@@ -306,15 +316,18 @@ public class PlayerMovement : PieceMovement
         }
         _checkedBlocks = new List<CheckedBlockBehaviour>();
 
-        GridManager gridManager = transform.root.GetComponent<GridManager>();
-        if(gridManager.IsChunkMatchBoard(_currentCoordinates.Chunk) && gridManager.CurrentMatchBoardChunks.Count == 0)
-        {
-            gridManager.BeginMatch(_currentCoordinates.Chunk);
-        }
+        // Tries to take an enemy piece
+        EnemyMovement enemyPiece = transform.parent.GetComponentInChildren<EnemyMovement>();
+        if(enemyPiece != null) TakePiece(enemyPiece);
+
+        // If the player moves to a match board, it will begin a match
+        if(!_gridManager.IsMatchActive)
+            if(_gridManager.IsChunkMatchBoard(_currentCoordinates.Chunk))
+                _gridManager.BeginMatch(_currentCoordinates.Chunk);
+            else
+                CalculatePieceMoves();
         else
-        {
-            CalculatePieceMoves();
-        }
+            _gridManager.YieldTurn();
     }
 
     // Serialization getters

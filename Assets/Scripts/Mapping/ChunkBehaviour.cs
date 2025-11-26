@@ -52,8 +52,8 @@ public class ChunkBehaviour : MonoBehaviour
         return new Vector3(gridXCorner, gridYPosition, gridZCorner);
     }
 
-    // Getters
-    public bool IsMatchBoard => _isMatchBoard;
+    // Getters and setters
+    public bool IsMatchBoard {get => _isMatchBoard; set => _isMatchBoard = value;}
     public Vector2Int ConcatenatingPosition => _concatenatingPosition;
 
     // Serialization getters

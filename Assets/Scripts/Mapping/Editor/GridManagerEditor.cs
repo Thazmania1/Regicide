@@ -9,6 +9,7 @@ public class GridManagerEditor : Editor
         GridManager gridManager = target as GridManager;
         Transform gridManagerTransform = gridManager.transform;
 
+        EditorGUILayout.BeginVertical("box");
         if (GUILayout.Button("Generate new chunk"))
         {
             GameObject newChunk = new GameObject();
@@ -17,6 +18,7 @@ public class GridManagerEditor : Editor
             newChunk.isStatic = true;
             newChunk.AddComponent<ChunkBehaviour>().TranslateConcatenatingPosition();
         }
+        EditorGUILayout.EndVertical();
 
         // The grid layout must never be manipulated
         gridManagerTransform.position = new Vector3(0, 0, 0);
