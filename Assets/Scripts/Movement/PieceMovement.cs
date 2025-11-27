@@ -154,16 +154,18 @@ public abstract class PieceMovement : MonoBehaviour
     // The piece's movement possibilities
     public abstract void CalculatePieceMoves();
 
-    // If two pieces are on the same coordinates, the invoker of this method will destroy the provided piece
+    // The invoker of this method will destroy the provided piece if the two pieces are on the same coordinates
     public void TakePiece(PieceMovement piece)
     {
         Coordinates pieceCoordinates = piece.CurrentCoordinates;
         if(_currentCoordinates.Chunk == pieceCoordinates.Chunk && _currentCoordinates.Layer == pieceCoordinates.Layer && _currentCoordinates.UnwrappedIndexBlock == pieceCoordinates.UnwrappedIndexBlock) piece.gameObject.SetActive(false);
     }
 
+    // When the player loses a match, this method is executed
+    public abstract void ResetPiece();
+
     // Getters and setters
     public Coordinates CurrentCoordinates {get => _currentCoordinates.Clone(); set { _currentCoordinates = value; TranslatePiecePosition(); }}
-    public Coordinates PreMatchCoordinates => _preMatchCoordinates.Clone();
 
     // Serialization getters
     public string CurrentCoordinatesReference => nameof(_currentCoordinates);

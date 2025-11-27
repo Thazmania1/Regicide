@@ -143,14 +143,8 @@ public class GridManager : MonoBehaviour
         }
         else
         {
-            foreach(EnemyMovement enemyPiece in _currentMatchEnemyPieces)
-            {
-                enemyPiece.CurrentCoordinates = enemyPiece.PreMatchCoordinates;
-                enemyPiece.gameObject.SetActive(true);
-            }
-
-            _currentMatchPlayerPiece.gameObject.SetActive(true);
-            _currentMatchPlayerPiece.CurrentCoordinates = _currentMatchPlayerPiece.PreMatchCoordinates;
+            foreach(EnemyMovement enemyPiece in _currentMatchEnemyPieces) enemyPiece.ResetPiece();
+            _currentMatchPlayerPiece.ResetPiece();
         }
         _currentMatchBoardChunks = new List<ChunkBehaviour>();
         _currentMatchEnemyPieces = new List<EnemyMovement>();

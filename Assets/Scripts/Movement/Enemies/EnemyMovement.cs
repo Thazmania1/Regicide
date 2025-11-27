@@ -70,4 +70,12 @@ public abstract class EnemyMovement : PieceMovement
         // Tries to take the player piece
         TakePiece(_gridManager.CurrentMatchPlayerPiece);
     }
+
+    public override void ResetPiece()
+    {
+        _currentCoordinates = _preMatchCoordinates.Clone();
+        _lastCoordinates = _currentCoordinates.Clone();
+        TranslatePiecePosition();
+        gameObject.SetActive(true);
+    }
 }

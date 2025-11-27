@@ -22282,7 +22282,7 @@ GameObject:
   - component: {fileID: 312184409}
   - component: {fileID: 312184412}
   m_Layer: 0
-  m_Name: Rook
+  m_Name: Bishop
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -22301,7 +22301,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 2109599072}
+  m_Father: {fileID: 1238115249}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!65 &312184409
 BoxCollider:
@@ -22386,13 +22386,13 @@ MonoBehaviour:
   m_GameObject: {fileID: 312184406}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: cf957164f66a12943a828d67683f4965, type: 3}
+  m_Script: {fileID: 11500000, guid: c344d5ce09132014c866809b5165445d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
   _currentCoordinates:
     _chunk: {x: 2, y: 2}
     _layer: 2
-    _block: {x: 7, y: 2}
+    _block: {x: 7, y: 3}
 --- !u!1 &312302915
 GameObject:
   m_ObjectHideFlags: 0
@@ -87998,7 +87998,8 @@ Transform:
   m_LocalPosition: {x: 3.5, y: 0, z: -0.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 312184407}
   m_Father: {fileID: 1005242842}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &1238115250
@@ -151528,8 +151529,7 @@ Transform:
   m_LocalPosition: {x: 3.5, y: 0, z: -1.5}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children:
-  - {fileID: 312184407}
+  m_Children: []
   m_Father: {fileID: 1005242842}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!23 &2109599073

@@ -330,6 +330,13 @@ public class PlayerMovement : PieceMovement
             _gridManager.YieldTurn();
     }
 
+    public override void ResetPiece()
+    {
+        _currentCoordinates = _preMatchCoordinates.Clone();
+        TranslatePiecePosition();
+        gameObject.SetActive(true);
+    }
+
     // Serialization getters
     public string CurrentPatternReference => nameof(_currentPattern);
 }
