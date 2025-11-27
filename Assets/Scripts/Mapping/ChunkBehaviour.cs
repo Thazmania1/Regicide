@@ -1,5 +1,5 @@
-using System.Collections.Generic;
 using UnityEngine;
+using static GridManager;
 
 public class ChunkBehaviour : MonoBehaviour
 {
@@ -7,7 +7,6 @@ public class ChunkBehaviour : MonoBehaviour
     [SerializeField] private bool _isMatchBoard = false;
 
     // Transform world position is based on the concatenating positions multiplied by the grid size
-    public const int GRID_SIZE = 8;
     [SerializeField] private Vector2Int _concatenatingPosition = new Vector2Int(0, 0);
     public void TranslateConcatenatingPosition()
     {

@@ -9,6 +9,11 @@ public abstract class EnemyMovement : PieceMovement
     // PawnMovement and BishopMovement use this variable
     protected Coordinates _lastCoordinates = new Coordinates();
 
+    // RookMovement and BishopMovement use these variables
+    protected bool _isExtendedPathInterrupted = false;
+    protected Vector3Int _extendedPathPosition = new Vector3Int();
+    protected bool _isBlockedByPiece = false;
+
     private void Start()
     {
         _gridManager = transform.root.GetComponent<GridManager>();

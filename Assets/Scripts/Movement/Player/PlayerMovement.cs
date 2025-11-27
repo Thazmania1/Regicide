@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-using static ChunkBehaviour;
+using static GridManager;
 
 public class PlayerMovement : PieceMovement
 {

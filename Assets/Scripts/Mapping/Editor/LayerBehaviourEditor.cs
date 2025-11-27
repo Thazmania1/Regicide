@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
+using static GridManager;
 using static ChunkBehaviour;
 
 [CustomEditor(typeof(LayerBehaviour))]

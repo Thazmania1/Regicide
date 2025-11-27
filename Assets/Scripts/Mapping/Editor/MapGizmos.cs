@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEditor;
+using static GridManager;
 using static ChunkBehaviour;
 
 // Runs every time the game recompiles in editor mode

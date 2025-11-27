@@ -1,5 +1,5 @@
 using UnityEngine;
-using static ChunkBehaviour;
+using static GridManager;
 
 public class PawnMovement : EnemyMovement
 {

@@ -1,6 +1,6 @@
 using System.Linq;
 using UnityEngine;
-using static ChunkBehaviour;
+using static GridManager;
 
 // Used for individual piece movement patterns
 public abstract class PieceMovement : MonoBehaviour

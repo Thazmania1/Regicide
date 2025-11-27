@@ -3,6 +3,9 @@ using UnityEngine;
 
 public class GridManager : MonoBehaviour
 {
+    // Defines the size of the chunks
+    public const int GRID_SIZE = 8;
+
     // Defines the teams in matches
     public enum MatchTeam
     {

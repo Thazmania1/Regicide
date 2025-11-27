@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 using static PieceMovement;
-using static ChunkBehaviour;
+using static GridManager;
 
 [CustomEditor(typeof(PieceMovement), true)]
 public class PieceMovementEditor : Editor
