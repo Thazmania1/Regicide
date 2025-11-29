@@ -85,7 +85,7 @@ public abstract class PieceMovement : MonoBehaviour
     }
 
     // Block parent is based on the piece's current coordinates
-    public bool TranslatePiecePosition()
+    public virtual bool TranslatePiecePosition()
     {
         Transform queriedBlock = FindBlock(_currentCoordinates.Chunk, _currentCoordinates.Layer, _currentCoordinates.UnwrappedIndexBlock);
         if(queriedBlock == null) return false;
@@ -117,13 +117,15 @@ public abstract class PieceMovement : MonoBehaviour
         return queriedLayer != null ? queriedLayer.transform : null;
     }
 
-    public Transform FindBlock(Transform layer, int unwrappedIndexQuery)
+    public Transform FindBlock(Transform layer, int unwrappedIndexQuery, bool isBlockActiveStateRelevant = true)
     {
         Transform queriedBlock = layer.GetChild(unwrappedIndexQuery);
-        return queriedBlock.gameObject.activeInHierarchy ? queriedBlock : null;
+        if(!isBlockActiveStateRelevant) return queriedBlock;
+        LayerBehaviour layerBehaviour = layer.GetComponent<LayerBehaviour>();
+        return layerBehaviour.Grid[unwrappedIndexQuery] ? queriedBlock : null;
     }
 
-    public Transform FindBlock(Vector2Int concatenatingPositionQuery, int heightQuery, int unwrappedIndexQuery)
+    public Transform FindBlock(Vector2Int concatenatingPositionQuery, int heightQuery, int unwrappedIndexQuery, bool isBlockActiveStateRelevant = true)
     {
         Transform queriedChunk = FindChunk(concatenatingPositionQuery);
         if(queriedChunk == null) return null;
@@ -131,13 +133,13 @@ public abstract class PieceMovement : MonoBehaviour
         Transform queriedLayer = FindLayer(queriedChunk, heightQuery);
         if(queriedLayer == null) return null;
 
-        Transform queriedBlock = FindBlock(queriedLayer, unwrappedIndexQuery);
+        Transform queriedBlock = FindBlock(queriedLayer, unwrappedIndexQuery, isBlockActiveStateRelevant);
         if(queriedBlock == null) return null;
 
         return queriedBlock;
     }
 
-    public Transform FindBlock(Coordinates blockCoordinates)
+    public Transform FindBlock(Coordinates blockCoordinates, bool isBlockActiveStateRelevant = true)
     {
         Transform queriedChunk = FindChunk(blockCoordinates.Chunk);
         if(queriedChunk == null) return null;
@@ -145,7 +147,7 @@ public abstract class PieceMovement : MonoBehaviour
         Transform queriedLayer = FindLayer(queriedChunk, blockCoordinates.Layer);
         if(queriedLayer == null) return null;
 
-        Transform queriedBlock = FindBlock(queriedLayer, blockCoordinates.UnwrappedIndexBlock);
+        Transform queriedBlock = FindBlock(queriedLayer, blockCoordinates.UnwrappedIndexBlock, isBlockActiveStateRelevant);
         if(queriedBlock == null) return null;
 
         return queriedBlock;
@@ -166,6 +168,9 @@ public abstract class PieceMovement : MonoBehaviour
 
     // Getters and setters
     public Coordinates CurrentCoordinates {get => _currentCoordinates.Clone(); set { _currentCoordinates = value; TranslatePiecePosition(); }}
+    public Transform GetBlock => transform.parent;
+    public Transform GetLayer => transform.parent.parent;
+    public Transform GetChunk => transform.parent.parent.parent;
 
     // Serialization getters
     public string CurrentCoordinatesReference => nameof(_currentCoordinates);
