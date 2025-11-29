@@ -7,13 +7,6 @@ public class KnightMovement : EnemyMovement
     private GameObject _inactiveBlock = null;
     public override void CalculatePieceMoves()
     {
-        // If the knight is currently on an invisible block, the block becomes inactive again
-        if(_inactiveBlock != null)
-        {
-            _inactiveBlock.SetActive(false);
-            _inactiveBlock.GetComponent<MeshRenderer>().enabled = true;
-        }
-
         for(int height = -3; height <= 3; height++)
         {
             // Skips layer check entirely if it doesn't exist
@@ -78,6 +71,13 @@ public class KnightMovement : EnemyMovement
     {
         Transform queriedBlock = FindBlock(_currentCoordinates.Chunk, _currentCoordinates.Layer, _currentCoordinates.UnwrappedIndexBlock, false);
         if(queriedBlock == null) return false;
+
+        // If the knight is currently on an invisible block, the block becomes inactive again
+        if(_inactiveBlock != null)
+        {
+            _inactiveBlock.SetActive(false);
+            _inactiveBlock.GetComponent<MeshRenderer>().enabled = true;
+        }
 
         // The knight becomes inactive if they move to an inactive block, so they make said block active but invisible until they leave from it
         GameObject queriedBlockObject = queriedBlock.gameObject;

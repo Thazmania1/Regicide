@@ -3,6 +3,7 @@ using UnityEditor;
 using UnityEngine;
 using static GridManager;
 using static ChunkBehaviour;
+using static PieceMovement;
 
 [CustomEditor(typeof(LayerBehaviour))]
 [CanEditMultipleObjects]
@@ -28,9 +29,7 @@ public class LayerBehaviourEditor : Editor
 
         // Wouldn't make sense to allow groupal height changes
         if(targets.Length > 1)
-        {
             EditorGUILayout.HelpBox("Multi-layer height editing is not allowed.", MessageType.Info);
-        }
         else
         {
             EditorGUILayout.BeginVertical("box");
@@ -67,6 +66,34 @@ public class LayerBehaviourEditor : Editor
             }
         }
         EditorGUILayout.EndVertical();
+
+        // Wouldn't make sense to allow groupal piece spawns
+        if(targets.Length > 1)
+        {
+            EditorGUILayout.HelpBox("Multi-layer piece spawns are not allowed.", MessageType.Info);
+        }
+        else
+        {
+            // Checks if there's any active block in the layer (the knight ignores this)
+            IReadOnlyList<bool> grid = layerBehaviour.Grid;
+            bool isLayerHabitable = false;
+            int blockUnwrappedIndex = 0;
+            for(; blockUnwrappedIndex < grid.Count; blockUnwrappedIndex++) if(grid[blockUnwrappedIndex]) { isLayerHabitable = true; break; }
+
+            EditorGUILayout.BeginVertical("box");
+            if(!isLayerHabitable)
+            {
+                EditorGUILayout.HelpBox("Only the enemy knight can reside on layers with no active blocks.", MessageType.Info);
+            }
+            else
+            {
+                if(GUILayout.Button("Spawn enemy pawn")) SpawnEnemyPiece<PawnMovement>("Pawn", layerBehaviour, blockUnwrappedIndex);
+                if(GUILayout.Button("Spawn enemy rook")) SpawnEnemyPiece<RookMovement>("Rook", layerBehaviour, blockUnwrappedIndex);
+                if(GUILayout.Button("Spawn enemy bishop")) SpawnEnemyPiece<BishopMovement>("Bishop", layerBehaviour, blockUnwrappedIndex);
+            }
+            if(GUILayout.Button("Spawn enemy knight")) SpawnEnemyPiece<KnightMovement>("Knight", layerBehaviour, blockUnwrappedIndex);
+            EditorGUILayout.EndVertical();
+        }
     }
 
 
@@ -197,5 +224,24 @@ public class LayerBehaviourEditor : Editor
                 newBlock.transform.position = blockPosition;
             }
         }
+    }
+
+
+    // Generic enemy piece spawner
+    private void SpawnEnemyPiece<T>(string pieceName, LayerBehaviour layerBehaviour, int blockUnwrappedIndex) where T : EnemyMovement
+    {
+        GameObject newPiece = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        Undo.RegisterCreatedObjectUndo(newPiece, $"Spawn enemy {pieceName}");
+
+        newPiece.transform.parent = layerBehaviour.transform.root;
+        newPiece.name = pieceName;
+
+        T newPieceScript = newPiece.AddComponent<T>();
+        newPieceScript.CurrentCoordinates = new Coordinates
+        (
+            layerBehaviour.transform.parent.GetComponent<ChunkBehaviour>().ConcatenatingPosition,
+            layerBehaviour.Height,
+            blockUnwrappedIndex
+        );
     }
 }
