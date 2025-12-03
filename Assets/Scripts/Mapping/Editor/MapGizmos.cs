@@ -28,7 +28,8 @@ public static class MapGizmos
             int fontSize = Mathf.Clamp((int)(20f / (distanceFromChunk * 0.1f)), 0, 50);
 
             GUIStyle style = new GUIStyle();
-            style.normal.textColor = Color.white;
+            Color gizmoColor = chunk.GetComponent<ChunkBehaviour>().IsMatchBoard ? Color.red : Color.white;
+            style.normal.textColor = gizmoColor;
             style.fontStyle = FontStyle.Bold;
             style.fontSize = fontSize;
             style.alignment = TextAnchor.MiddleCenter;
@@ -43,6 +44,9 @@ public static class MapGizmos
                     Vector3 chunkCorner = CalculateChunkCorner(chunk, horizon, depth, false);
 
                     Handles.zTest = UnityEngine.Rendering.CompareFunction.LessEqual;
+
+                    Handles.color = gizmoColor;
+
                     Handles.DrawLine
                     (
                         new Vector3
