@@ -53,17 +53,14 @@ public abstract class EnemyMovement : PieceMovement
         foreach(Coordinates calculatedMove in _calculatedMoves)
         {
             float distance = Vector3.Distance(calculatedMove.ToWorldPosition3D(), playerPieceCoordinates.ToWorldPosition3D());
-            Debug.Log($"{calculatedMove.Chunk} | {calculatedMove.Layer} | {calculatedMove.WrappedIndexBlock} (Unwrapped: {calculatedMove.UnwrappedIndexBlock})\nDistance from player: {distance}");
             if(distance < bestDistance)
             {
                 bestMove = calculatedMove;
                 bestDistance = distance;
-                Debug.Log("New best move!");
             }
         }
         _calculatedMoves = new List<Coordinates>();
         if(bestMove == null) return;
-        Debug.Log($"Best move: {bestMove.Chunk} | {bestMove.Layer} | {bestMove.WrappedIndexBlock} (Unwrapped: {bestMove.UnwrappedIndexBlock})");
         _currentCoordinates = bestMove.Clone();
         TranslatePiecePosition();
 

@@ -30,12 +30,10 @@ public class PieceMovementEditor : Editor
         EditorGUILayout.PropertyField(currentChunk.FindPropertyRelative("y"), new GUIContent("Z"));
         EditorGUI.indentLevel--;
         EditorGUILayout.EndVertical();
-        EditorGUILayout.Space();
 
         EditorGUILayout.BeginVertical("box");
         EditorGUILayout.PropertyField(currentLayer, new GUIContent("Layer"));
         EditorGUILayout.EndVertical();
-        EditorGUILayout.Space();
 
         EditorGUILayout.BeginVertical("box");
         EditorGUILayout.LabelField("Block");

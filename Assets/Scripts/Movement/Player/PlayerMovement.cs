@@ -1,24 +1,30 @@
+using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using static GridManager;
 
 public class PlayerMovement : PieceMovement
 {
     // The player's movement patterns
-    private enum PlayerPattern
+    public enum PlayerPattern
     {
         KING,
         ROOK,
         BISHOP,
         KNIGHT
     }
-    [SerializeField] private PlayerPattern _currentPattern = PlayerPattern.KNIGHT;
+    [SerializeField] private PlayerPattern _currentPattern = PlayerPattern.KING;
+    [SerializeField] private AnimationCurve _UIIconSelectionAnimation;
+    [SerializeField] private GameObject _playerPatternsPanel;
 
     // Tracks which blocks have been made clickable to reset later
     private List<CheckedBlockBehaviour> _checkedBlocks = new List<CheckedBlockBehaviour>();
 
     public override void CalculatePieceMoves()
     {
+        ResetClickableBlocks();
+
         // Tracks the extended pathfinding of the rook and the bishop's moves
         bool isExtendedPathInterrupted = false;
         Vector3Int extendedPathPosition = new Vector3Int();
@@ -303,18 +309,22 @@ public class PlayerMovement : PieceMovement
         }
     }
 
-    protected void PlayMove(Coordinates blockCoordinates)
+    public void ResetClickableBlocks()
     {
-        if(!_gridManager.IsMatchActive) _preMatchCoordinates = _currentCoordinates.Clone();
-        _currentCoordinates = blockCoordinates.Clone();
-        TranslatePiecePosition();
-
         // Resets the clickable blocks
         foreach(CheckedBlockBehaviour checkedBlock in _checkedBlocks)
         {
             Destroy(checkedBlock);
         }
         _checkedBlocks = new List<CheckedBlockBehaviour>();
+    }
+
+    protected void PlayMove(Coordinates blockCoordinates)
+    {
+        if(!_gridManager.IsMatchActive) _preMatchCoordinates = _currentCoordinates.Clone();
+        _currentCoordinates = blockCoordinates.Clone();
+        TranslatePiecePosition();
+        ResetClickableBlocks();
 
         // Tries to take an enemy piece
         EnemyMovement enemyPiece = transform.parent.GetComponentInChildren<EnemyMovement>();
@@ -330,6 +340,117 @@ public class PlayerMovement : PieceMovement
             _gridManager.YieldTurn();
     }
 
+    // Player pattern selection logic
+    private Dictionary<KeyCode, PlayerPattern> _patternKeyMap = new Dictionary<KeyCode, PlayerPattern>
+    {
+        { KeyCode.Q, PlayerPattern.KING },
+        { KeyCode.W, PlayerPattern.ROOK },
+        { KeyCode.E, PlayerPattern.BISHOP },
+        { KeyCode.R, PlayerPattern.KNIGHT }
+    };
+    private Dictionary<string, RectTransform> _iconMap = new Dictionary<string, RectTransform>();
+    private RectTransform _lastSelectedIcon;
+    private Dictionary<RectTransform, Coroutine> _runningAnimations = new Dictionary<RectTransform, Coroutine>();
+    private void Awake()
+    {
+        foreach(RectTransform icon in _playerPatternsPanel.transform)
+        {
+            _iconMap[icon.name] = icon;
+
+            // Applies the keybind to each respective icon's labeñ
+            PlayerPattern pattern;
+            if(System.Enum.TryParse(icon.name, out pattern))
+            {
+                if(pattern == _currentPattern) _lastSelectedIcon = icon;
+                KeyCode boundKey = KeyCode.None;
+                foreach(var kvp in _patternKeyMap)
+                {
+                    if(kvp.Value == pattern)
+                    {
+                        boundKey = kvp.Key;
+                        break;
+                    }
+                }
+
+                icon.GetComponentInChildren<TextMeshProUGUI>().text = boundKey.ToString();
+            }
+        }
+    }
+    private void Update()
+    {
+        // Constantly checks for pattern changes
+        PlayerPattern lastPattern = _currentPattern;
+        foreach(var patternKey in _patternKeyMap)
+        {
+            if(Input.GetKeyDown(patternKey.Key))
+            {
+                _currentPattern = patternKey.Value;
+                break;
+            }
+        }
+
+        if(lastPattern != _currentPattern)
+        {
+            UpdateIcons();
+            ResetClickableBlocks();
+            CalculatePieceMoves();
+        }
+    }
+    private void UpdateIcons()
+    {
+        if(_iconMap.TryGetValue(_currentPattern.ToString(), out RectTransform selectedIcon))
+        {
+            // Animates new and previous selection
+            StartIconAnimation(selectedIcon, true);
+            if(_lastSelectedIcon != null && _lastSelectedIcon != selectedIcon) StartIconAnimation(_lastSelectedIcon, false);
+
+            _lastSelectedIcon = selectedIcon;
+        }
+    }
+    private void StartIconAnimation(RectTransform icon, bool isSelected)
+    {
+        // Interrupts any previous animation
+        if(_runningAnimations.TryGetValue(icon, out Coroutine running)) StopCoroutine(running);
+
+        Coroutine newCoroutine = StartCoroutine(IconAnimation(icon, isSelected));
+        _runningAnimations[icon] = newCoroutine;
+    }
+    private IEnumerator IconAnimation(RectTransform icon, bool isSelected)
+    {
+        // Makes sure to start the animation from any previous interrupted animation
+        Keyframe[] keys = _UIIconSelectionAnimation.keys;
+        float startTime = keys[0].time;
+        float endTime = keys[1].time;
+        float duration = Mathf.Abs(endTime - startTime);
+
+        float targetFrom = isSelected ? startTime : endTime;
+        float targetTo = isSelected ? endTime : startTime;
+
+        float currentScale = icon.localScale.x;
+        float startScale = _UIIconSelectionAnimation.Evaluate(targetFrom);
+        float endScale = _UIIconSelectionAnimation.Evaluate(targetTo);
+
+        float lastTime = Mathf.InverseLerp(startScale, endScale, currentScale);
+        float currentTimeOnCurve = Mathf.Lerp(targetFrom, targetTo, lastTime);
+
+        float timeElapsed = 0f;
+        float curveSpan = Mathf.Abs(targetTo - currentTimeOnCurve);
+        while(timeElapsed < curveSpan)
+        {
+            timeElapsed += Time.deltaTime;
+            float newTime = Mathf.Clamp01(timeElapsed / curveSpan);
+
+            float curveTime = Mathf.Lerp(currentTimeOnCurve, targetTo, newTime);
+            float scaleValue = _UIIconSelectionAnimation.Evaluate(curveTime);
+
+            icon.localScale = Vector3.one * scaleValue;
+
+            yield return null;
+        }
+
+        icon.localScale = Vector3.one * _UIIconSelectionAnimation.Evaluate(targetTo);
+    }
+
     public override void ResetPiece()
     {
         _currentCoordinates = _preMatchCoordinates.Clone();
@@ -337,6 +458,12 @@ public class PlayerMovement : PieceMovement
         gameObject.SetActive(true);
     }
 
+    // Getters
+    public GameObject PlayerPatternsPanel => _playerPatternsPanel;
+    public PlayerPattern CurrentPattern => _currentPattern;
+
     // Serialization getters
     public string CurrentPatternReference => nameof(_currentPattern);
+    public string UIIconSelectionAnimationReference => nameof(_UIIconSelectionAnimation);
+    public string PlayerPatternsPanelReference => nameof(_playerPatternsPanel);
 }

@@ -1,10 +1,17 @@
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
+using System.Collections;
 
 public class GridManager : MonoBehaviour
 {
     // Defines the size of the chunks
     public const int GRID_SIZE = 8;
+
+    // UI references
+    [SerializeField] private GameObject _matchDataPanel;
+    [SerializeField] private TextMeshProUGUI _matchTimerText;
+    [SerializeField] private TextMeshProUGUI _playerMovesText;
 
     // Defines the teams in matches
     public enum MatchTeam
@@ -16,6 +23,10 @@ public class GridManager : MonoBehaviour
     // Tracks all adjacent chunks in the current match boards
     private bool _isMatchActive = false;
     private List<ChunkBehaviour> _currentMatchBoardChunks = new List<ChunkBehaviour>();
+
+    // Match data trackings
+    private float _matchTime = 0;
+    private int _playerMoves = 0;
 
     // Tracks all pieces in the match board
     private List<EnemyMovement> _currentMatchEnemyPieces = new List<EnemyMovement>();
@@ -35,6 +46,8 @@ public class GridManager : MonoBehaviour
     public void BeginMatch(Vector2Int matchBoardOriginChunk)
     {
         _isMatchActive = true;
+        _matchTime = 0;
+        _playerMoves = 0;
 
         // Filters out all non-match board chunks
         ChunkBehaviour[] chunks = transform.GetComponentsInChildren<ChunkBehaviour>();
@@ -98,12 +111,23 @@ public class GridManager : MonoBehaviour
         _currentMatchBoardChunks = adjacentMatchBoardChunks;
 
         // Gets all the enemy pieces in the match board and gives the player the first move
-        foreach(ChunkBehaviour adjacentMatchBoardChunk in adjacentMatchBoardChunks)
-        {
-            _currentMatchEnemyPieces.AddRange(adjacentMatchBoardChunk.GetComponentsInChildren<EnemyMovement>());
-        }
+        foreach(ChunkBehaviour adjacentMatchBoardChunk in adjacentMatchBoardChunks) _currentMatchEnemyPieces.AddRange(adjacentMatchBoardChunk.GetComponentsInChildren<EnemyMovement>(true));
         _currentTurn = MatchTeam.PLAYER;
         _currentMatchPlayerPiece.CalculatePieceMoves();
+
+        StartCoroutine(MatchTimer());
+        _playerMovesText.text = $"Moves: {_playerMoves}";
+        _matchDataPanel.SetActive(true);
+    }
+
+    private IEnumerator MatchTimer()
+    {
+        while(_isMatchActive)
+        {
+            _matchTime += Time.deltaTime;
+            _matchTimerText.text = $"Time {_matchTime:F2}s";
+            yield return null;
+        }
     }
 
     // Team turn toggler, also checks for win conditions
@@ -114,6 +138,9 @@ public class GridManager : MonoBehaviour
             _currentMatchPlayerPiece.CalculatePieceMoves();
         else
         {
+            _playerMoves++;
+            _playerMovesText.text = $"Moves: {_playerMoves}";
+
             bool areAllEnemiesTaken = true;
             foreach(EnemyMovement enemyPiece in _currentMatchEnemyPieces)
             {
@@ -133,6 +160,7 @@ public class GridManager : MonoBehaviour
     public void EndMatch(MatchTeam winner)
     {
         _isMatchActive = false;
+        _matchDataPanel.SetActive(false);
 
         // If the player wins, the match board turns into a regular explorable area, and destroys all enemies that were in it
         // If the enemies wins, the pieces are sent back to their positions before the match started
@@ -155,4 +183,9 @@ public class GridManager : MonoBehaviour
     public bool IsMatchActive => _isMatchActive;
     public IReadOnlyList<ChunkBehaviour> CurrentMatchBoardChunks => _currentMatchBoardChunks;
     public PlayerMovement CurrentMatchPlayerPiece => _currentMatchPlayerPiece;
+
+    // Serialization getters
+    public string MatchDataPanelReference = nameof(_matchDataPanel);
+    public string MatchTimerTextReference = nameof(_matchTimerText);
+    public string PlayerMovesReference = nameof(_playerMovesText);
 }
