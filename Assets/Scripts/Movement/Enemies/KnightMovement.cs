@@ -67,7 +67,7 @@ public class KnightMovement : EnemyMovement
     }
 
     // Overrides the default functionality to allow the knight's gimmick to work
-    public override bool TranslatePiecePosition()
+    public override bool TranslatePiecePosition(bool isInstantaneous = false)
     {
         Transform queriedBlock = FindBlock(_currentCoordinates.Chunk, _currentCoordinates.Layer, _currentCoordinates.UnwrappedIndexBlock, false);
         if(queriedBlock == null) return false;
@@ -90,8 +90,16 @@ public class KnightMovement : EnemyMovement
         else
             _inactiveBlock = null;
 
-        transform.parent = queriedBlock;
-        transform.localPosition = new Vector3(0, 1, 0);
+        if(!isInstantaneous)
+        {
+            transform.SetParent(queriedBlock, true);
+            StartCoroutine(PieceMovementAnimation());
+        }
+        else
+        {
+            transform.SetParent(queriedBlock);
+            transform.localPosition = new Vector3(0, 1, 0);
+        }
 
         // Resets the pathfinder
         _checkingCoordinates = _currentCoordinates.Clone();

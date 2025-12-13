@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using System.Collections;
+using UnityEngine.UI;
 
 public class GridManager : MonoBehaviour
 {
@@ -12,6 +13,11 @@ public class GridManager : MonoBehaviour
     [SerializeField] private GameObject _matchDataPanel;
     [SerializeField] private TextMeshProUGUI _matchTimerText;
     [SerializeField] private TextMeshProUGUI _playerMovesText;
+    [SerializeField] private Image _matchLossCover;
+    [SerializeField] private float _matchLossCoverTime;
+
+    // Camera reference
+    [SerializeField] private CameraController _cameraController;
 
     // Defines the teams in matches
     public enum MatchTeam
@@ -30,7 +36,7 @@ public class GridManager : MonoBehaviour
 
     // Tracks all pieces in the match board
     private List<EnemyMovement> _currentMatchEnemyPieces = new List<EnemyMovement>();
-    private PlayerMovement _currentMatchPlayerPiece;
+    private PlayerMovement _currentMatchPlayerPiece = null;
 
     // Tracks which team holds the turn, by default, the player always goes first
     private MatchTeam _currentTurn = MatchTeam.PLAYER;
@@ -131,11 +137,16 @@ public class GridManager : MonoBehaviour
     }
 
     // Team turn toggler, also checks for win conditions
-    public void YieldTurn()
+    public IEnumerator YieldTurn()
     {
         _currentTurn = _currentTurn == MatchTeam.PLAYER ? MatchTeam.ENEMIES : MatchTeam.PLAYER;
         if(_currentTurn == MatchTeam.PLAYER)
+        {
+            // Pans camera to the player
+            yield return new WaitForSeconds(0.5f);
+            yield return StartCoroutine(_cameraController.ChangeCameraFocus(_currentMatchPlayerPiece));
             _currentMatchPlayerPiece.CalculatePieceMoves();
+        }
         else
         {
             _playerMoves++;
@@ -146,24 +157,32 @@ public class GridManager : MonoBehaviour
             {
                 if(!enemyPiece.gameObject.activeInHierarchy) continue;
                 areAllEnemiesTaken = false;
+
+                // Pans camera to the next moving enemy and fakes AI thinking
+                yield return new WaitForSeconds(0.5f);
+                yield return StartCoroutine(_cameraController.ChangeCameraFocus(enemyPiece));
+                yield return new WaitForSeconds(Random.Range(0.5f, 1f));
+
                 enemyPiece.CalculatePieceMoves();
-                if(!_currentMatchPlayerPiece.gameObject.activeInHierarchy) { EndMatch(MatchTeam.ENEMIES); return; }
+                if(!_currentMatchPlayerPiece.gameObject.activeInHierarchy) { StartCoroutine(EndMatch(MatchTeam.ENEMIES)); yield break; }
             }
+            
             if(areAllEnemiesTaken)
-                EndMatch(MatchTeam.PLAYER);
+                StartCoroutine(EndMatch(MatchTeam.PLAYER));
             else
-                YieldTurn();
+                StartCoroutine(YieldTurn());
         }
     }
 
     // Ends the match with a winner
-    public void EndMatch(MatchTeam winner)
+    public IEnumerator EndMatch(MatchTeam winner)
     {
         _isMatchActive = false;
         _matchDataPanel.SetActive(false);
 
         // If the player wins, the match board turns into a regular explorable area, and destroys all enemies that were in it
         // If the enemies wins, the pieces are sent back to their positions before the match started
+        float elapsedTime = 0;
         if(winner == MatchTeam.PLAYER)
         {
             foreach(ChunkBehaviour chunk in _currentMatchBoardChunks)
@@ -175,21 +194,37 @@ public class GridManager : MonoBehaviour
         }
         else
         {
+            // Black screen fade animation
+            while(elapsedTime < _matchLossCoverTime)
+            {
+                elapsedTime += Time.deltaTime;
+                float progress = Mathf.Clamp(elapsedTime / _matchLossCoverTime, 0, 1);
+                _matchLossCover.color = new Color(0, 0, 0, progress);
+                yield return null;
+            }
+
             foreach(EnemyMovement enemyPiece in _currentMatchEnemyPieces) enemyPiece.ResetPiece();
             _currentMatchPlayerPiece.ResetPiece();
+            StartCoroutine(_cameraController.ChangeCameraFocus(_currentMatchPlayerPiece, true));
+            yield return new WaitForSeconds(0.1f);
+
+            elapsedTime = _matchLossCoverTime;
+            while(elapsedTime > 0f)
+            {
+                elapsedTime -= Time.deltaTime;
+                float progress = Mathf.Clamp(elapsedTime / _matchLossCoverTime, 0f, 1f);
+                _matchLossCover.color = new Color(0, 0, 0, progress);
+                yield return null;
+            }
         }
         _currentMatchBoardChunks = new List<ChunkBehaviour>();
         _currentMatchEnemyPieces = new List<EnemyMovement>();
         _currentMatchPlayerPiece.CalculatePieceMoves();
+        _currentMatchPlayerPiece = null;
     }
 
     // Getters
     public bool IsMatchActive => _isMatchActive;
     public IReadOnlyList<ChunkBehaviour> CurrentMatchBoardChunks => _currentMatchBoardChunks;
     public PlayerMovement CurrentMatchPlayerPiece => _currentMatchPlayerPiece;
-
-    // Serialization getters
-    public string MatchDataPanelReference = nameof(_matchDataPanel);
-    public string MatchTimerTextReference = nameof(_matchTimerText);
-    public string PlayerMovesReference = nameof(_playerMovesText);
 }

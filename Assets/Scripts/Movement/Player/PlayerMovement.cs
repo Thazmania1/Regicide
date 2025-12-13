@@ -392,7 +392,7 @@ public class PlayerMovement : PieceMovement
             else
                 CalculatePieceMoves();
         else
-            _gridManager.YieldTurn();
+            StartCoroutine(_gridManager.YieldTurn());
     }
 
     // Player pattern selection logic
@@ -509,7 +509,7 @@ public class PlayerMovement : PieceMovement
     public override void ResetPiece()
     {
         _currentCoordinates = _preMatchCoordinates.Clone();
-        TranslatePiecePosition();
+        TranslatePiecePosition(true);
         gameObject.SetActive(true);
     }
 

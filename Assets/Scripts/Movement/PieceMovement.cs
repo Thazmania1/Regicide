@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Linq;
 using UnityEngine;
 using static GridManager;
@@ -53,9 +54,9 @@ public abstract class PieceMovement : MonoBehaviour
         }
 
         // Getters and setters
-        public Vector2Int Chunk {get => _chunk; set => _chunk = value;}
-        public int Layer {get => _layer; set => _layer = value;}
-        public Vector2Int WrappedIndexBlock {get => _block; set => _block = value;}
+        public Vector2Int Chunk { get => _chunk; set => _chunk = value; }
+        public int Layer { get => _layer; set => _layer = value; }
+        public Vector2Int WrappedIndexBlock { get => _block; set => _block = value; }
         public int UnwrappedIndexBlock => _block.x + _block.y * GRID_SIZE;
 
         // Serialization getters
@@ -76,7 +77,6 @@ public abstract class PieceMovement : MonoBehaviour
     // Reference to the piece's grid manager
     protected GridManager _gridManager;
 
-
     private void Start()
     {
         _gridManager = GetGrid.GetComponent<GridManager>();
@@ -84,18 +84,63 @@ public abstract class PieceMovement : MonoBehaviour
         CalculatePieceMoves();
     }
 
+    // Piece movement animation
+    // Animation must be declared in code due to monobehaviour limitations
+    private static AnimationCurve _pieceMovementAnimation;
+    static PieceMovement()
+    {
+        Keyframe keyFrame1 = new Keyframe(0f, 0f);
+        Keyframe keyFrame2 = new Keyframe(0.1f, 1f);
+
+        keyFrame1.inTangent = float.PositiveInfinity;
+        keyFrame1.outTangent = float.PositiveInfinity;
+
+        keyFrame2.inTangent = float.PositiveInfinity;
+        keyFrame2.outTangent = float.PositiveInfinity;
+
+        _pieceMovementAnimation = new AnimationCurve(keyFrame1, keyFrame2);
+        _pieceMovementAnimation.SmoothTangents(0, 0f);
+        _pieceMovementAnimation.SmoothTangents(1, 0f);
+    }
+
     // Block parent is based on the piece's current coordinates
-    public virtual bool TranslatePiecePosition()
+    public virtual bool TranslatePiecePosition(bool isInstantaneous = false)
     {
         Transform queriedBlock = FindBlock(_currentCoordinates.Chunk, _currentCoordinates.Layer, _currentCoordinates.UnwrappedIndexBlock);
         if(queriedBlock == null) return false;
 
-        transform.parent = queriedBlock;
-        transform.localPosition = new Vector3(0, 1, 0);
+        if(!isInstantaneous)
+        {
+            transform.SetParent(queriedBlock, true);
+            StartCoroutine(PieceMovementAnimation());
+        }
+        else
+        {
+            transform.SetParent(queriedBlock);
+            transform.localPosition = new Vector3(0, 1, 0);
+        }
 
         // Resets the pathfinder
         _checkingCoordinates = _currentCoordinates.Clone();
         return true;
+    }
+    protected IEnumerator PieceMovementAnimation()
+    {
+        Vector3 startPosition = transform.localPosition;
+        Vector3 targetPosition = new Vector3(0f, 1f, 0f);
+
+        Keyframe[] animationKeyframes = _pieceMovementAnimation.keys;
+        float animationTime = animationKeyframes[animationKeyframes.Length - 1].time;
+        float elapsedTime = 0f;
+        while(elapsedTime < animationTime)
+        {
+            elapsedTime += Time.deltaTime;
+            float progress = Mathf.Clamp(elapsedTime / animationTime, 0f, 1f);
+            float animationProgress = _pieceMovementAnimation.Evaluate(progress * animationTime);
+            transform.localPosition = Vector3.LerpUnclamped(startPosition, targetPosition, animationProgress);
+            yield return null;
+        }
+        transform.localPosition = targetPosition;
     }
 
     // Queries

@@ -72,7 +72,7 @@ public abstract class EnemyMovement : PieceMovement
     {
         _currentCoordinates = _preMatchCoordinates.Clone();
         _lastCoordinates = _currentCoordinates.Clone();
-        TranslatePiecePosition();
+        TranslatePiecePosition(true);
         gameObject.SetActive(true);
     }
 }

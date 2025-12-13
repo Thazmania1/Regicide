@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 public class CameraController : MonoBehaviour
@@ -10,6 +11,10 @@ public class CameraController : MonoBehaviour
     private float _distance = -10f;
     private float _speed = 5f;
     private Vector2 _orbitAngles = new Vector2(33f, -33f);
+
+    // Camera focus change animation
+    [SerializeField] private AnimationCurve _cameraFocusChangeAnimation;
+    [SerializeField] private Transform _invisibleFocus;
 
     private void Start()
     {
@@ -37,8 +42,32 @@ public class CameraController : MonoBehaviour
     }
 
     // Changes the focus of the camera
-    public void ChangeCameraFocus(PieceMovement pieceTarget)
+    public IEnumerator ChangeCameraFocus(PieceMovement pieceTarget, bool isInstantaneous = false)
     {
+        if(pieceTarget == null) yield break;
+
+        if(!isInstantaneous)
+        {
+            Vector3 startPostion = _pieceTargetTransform.position;
+            Vector3 targetPosition = pieceTarget.transform.position;
+
+            // Temporarily sets camera target to invisible object
+            _invisibleFocus.position = startPostion;
+            _pieceTargetTransform = _invisibleFocus;
+
+            Keyframe[] keyframes = _cameraFocusChangeAnimation.keys;
+            float animationTime = keyframes[keyframes.Length - 1].time;
+            float elapsedTime = 0f;
+            while(elapsedTime < animationTime)
+            {
+                elapsedTime += Time.deltaTime;
+                float progress = Mathf.Clamp(elapsedTime / animationTime, 0f, 1f);
+                float animationProgress = _cameraFocusChangeAnimation.Evaluate(progress * animationTime);
+                _invisibleFocus.position = Vector3.LerpUnclamped(startPostion, targetPosition, animationProgress);
+                yield return null;
+            }
+        }
+
         _pieceTargetTransform = pieceTarget.transform;
     }
 }

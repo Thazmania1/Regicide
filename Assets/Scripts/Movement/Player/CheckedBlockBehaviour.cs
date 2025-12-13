@@ -87,6 +87,7 @@ public class CheckedBlockBehaviour : MonoBehaviour
             transform.localPosition = new Vector3(blockPosition.x, _higlightAnimation.Evaluate(elapsedTime), blockPosition.z);
             yield return null;
         }
+        transform.localPosition = new Vector3(blockPosition.x, 0, blockPosition.z);
     }
 
     // Cleanly removes the script
