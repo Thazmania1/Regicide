@@ -79,7 +79,7 @@ public abstract class PieceMovement : MonoBehaviour
 
     private void Start()
     {
-        _gridManager = transform.root.GetComponent<GridManager>();
+        _gridManager = GetGrid.GetComponent<GridManager>();
         TranslatePiecePosition();
         CalculatePieceMoves();
     }
@@ -101,7 +101,7 @@ public abstract class PieceMovement : MonoBehaviour
     // Queries
     public Transform FindChunk(Vector2Int concatenatingPositionQuery)
     {
-        var queriedChunk = transform.root
+        var queriedChunk = GetGrid
             .GetComponentsInChildren<ChunkBehaviour>()
             .FirstOrDefault(chunk => chunk != null && chunk.ConcatenatingPosition == concatenatingPositionQuery);
 
@@ -171,6 +171,7 @@ public abstract class PieceMovement : MonoBehaviour
     public Transform GetBlock => transform.parent;
     public Transform GetLayer => transform.parent.parent;
     public Transform GetChunk => transform.parent.parent.parent;
+    public Transform GetGrid => transform.root;
 
     // Serialization getters
     public string CurrentCoordinatesReference => nameof(_currentCoordinates);

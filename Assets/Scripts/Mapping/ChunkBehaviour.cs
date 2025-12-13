@@ -51,6 +51,23 @@ public class ChunkBehaviour : MonoBehaviour
         return new Vector3(gridXCorner, gridYPosition, gridZCorner);
     }
 
+    // Wrapper method to call the layer's redraw grid method while also applying match board logic
+    private bool _wasMatchBoard;
+    public void RedrawGridMaterials()
+    {
+        if(_isMatchBoard == _wasMatchBoard)
+            return;
+        else
+            _wasMatchBoard = _isMatchBoard;
+
+        foreach(LayerBehaviour layer in transform.GetComponentsInChildren<LayerBehaviour>()) layer.RedrawGridMaterials(_isMatchBoard);
+    }
+
+    private void Awake()
+    {
+        _wasMatchBoard = _isMatchBoard;
+    }
+
     // Getters and setters
     public bool IsMatchBoard {get => _isMatchBoard; set => _isMatchBoard = value;}
     public Vector2Int ConcatenatingPosition => _concatenatingPosition;

@@ -166,7 +166,11 @@ public class GridManager : MonoBehaviour
         // If the enemies wins, the pieces are sent back to their positions before the match started
         if(winner == MatchTeam.PLAYER)
         {
-            foreach(ChunkBehaviour chunk in _currentMatchBoardChunks) chunk.IsMatchBoard = false;
+            foreach(ChunkBehaviour chunk in _currentMatchBoardChunks)
+            {
+                chunk.IsMatchBoard = false;
+                chunk.RedrawGridMaterials();
+            }
             foreach(EnemyMovement enemyPiece in _currentMatchEnemyPieces) Destroy(enemyPiece.gameObject);
         }
         else

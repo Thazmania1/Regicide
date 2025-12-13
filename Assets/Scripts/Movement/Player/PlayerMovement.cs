@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using static GridManager;
+using static PieceMovement;
 
 public class PlayerMovement : PieceMovement
 {
@@ -14,6 +15,7 @@ public class PlayerMovement : PieceMovement
         BISHOP,
         KNIGHT
     }
+
     [SerializeField] private PlayerPattern _currentPattern = PlayerPattern.KING;
     [SerializeField] private AnimationCurve _UIIconSelectionAnimation;
     [SerializeField] private GameObject _playerPatternsPanel;
@@ -21,14 +23,22 @@ public class PlayerMovement : PieceMovement
     // Tracks which blocks have been made clickable to reset later
     private List<CheckedBlockBehaviour> _checkedBlocks = new List<CheckedBlockBehaviour>();
 
+    // Stores candidate positions before scripts are applied (for block highlight animation)
+    private readonly List<Coordinates> _checkedBlockPositions = new List<Coordinates>();
+    private void RegisterCheckedPosition(Coordinates coordinates)
+    {
+        for(int i = 0; i < _checkedBlockPositions.Count; i++) if(_checkedBlockPositions[i].ToWorldPosition3D() == coordinates.ToWorldPosition3D()) return;
+        _checkedBlockPositions.Add(coordinates.Clone());
+    }
+
     public override void CalculatePieceMoves()
     {
         ResetClickableBlocks();
 
         // Tracks the extended pathfinding of the rook and the bishop's moves
-        bool isExtendedPathInterrupted = false;
-        Vector3Int extendedPathPosition = new Vector3Int();
-        bool isBlockedByPiece = false;
+        bool isExtendedPathInterrupted;
+        bool isBlockedByPiece;
+        Vector3Int extendedPathPosition;
 
         switch(_currentPattern)
         {
@@ -38,6 +48,7 @@ public class PlayerMovement : PieceMovement
                 for(int height = -1; height <= 1; height++)
                 {
                     _checkingCoordinates.Layer = _currentCoordinates.Layer + height;
+
                     for(int horizon = -1; horizon <= 1; horizon++)
                     {
                         int nextHorizonBlock = _currentCoordinates.WrappedIndexBlock.x + horizon;
@@ -68,18 +79,14 @@ public class PlayerMovement : PieceMovement
 
                             Transform digPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer + 1, _checkingCoordinates.UnwrappedIndexBlock);
                             if(digPosition != null) continue;
+
                             Transform queriedPosition = FindBlock(_checkingCoordinates.Clone());
                             if(queriedPosition == null) continue;
 
-                            CheckedBlockBehaviour checkedBlock = queriedPosition.gameObject.AddComponent<CheckedBlockBehaviour>();
-                            checkedBlock.InitializeBlock(PlayMove, _checkingCoordinates.Clone());
-                            _checkedBlocks.Add(checkedBlock);
+                            RegisterCheckedPosition(_checkingCoordinates.Clone());
                         }
                     }
                 }
-
-                // The player shouldn't be able to stay still
-                Destroy(transform.parent.GetComponent<CheckedBlockBehaviour>());
                 break;
             }
 
@@ -91,6 +98,7 @@ public class PlayerMovement : PieceMovement
                     isExtendedPathInterrupted = false;
                     isBlockedByPiece = false;
                     extendedPathPosition = new Vector3Int(horizon, _currentCoordinates.Layer, 0);
+
                     while(!isExtendedPathInterrupted && extendedPathPosition.x % (GRID_SIZE + 1) != 0)
                     {
                         isExtendedPathInterrupted = true;
@@ -113,19 +121,21 @@ public class PlayerMovement : PieceMovement
 
                             Transform digPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer + 1, _checkingCoordinates.UnwrappedIndexBlock);
                             if(digPosition != null) continue;
+
                             Transform queriedPosition = FindBlock(_checkingCoordinates.Clone());
                             if(queriedPosition == null) continue;
+
                             PieceMovement piece = queriedPosition.GetComponentInChildren<PieceMovement>();
                             if(piece != null) isBlockedByPiece = true;
 
-                            CheckedBlockBehaviour checkedBlock = queriedPosition.gameObject.AddComponent<CheckedBlockBehaviour>();
-                            checkedBlock.InitializeBlock(PlayMove, _checkingCoordinates.Clone());
-                            _checkedBlocks.Add(checkedBlock);
+                            RegisterCheckedPosition(_checkingCoordinates.Clone());
+
                             extendedPathPosition.y += height;
                             isExtendedPathInterrupted = isBlockedByPiece;
                             break;
                         }
-                        extendedPathPosition.x += horizon * 1;
+
+                        extendedPathPosition.x += horizon;
                     }
                 }
 
@@ -134,6 +144,7 @@ public class PlayerMovement : PieceMovement
                     isExtendedPathInterrupted = false;
                     isBlockedByPiece = false;
                     extendedPathPosition = new Vector3Int(0, _currentCoordinates.Layer, depth);
+
                     while(!isExtendedPathInterrupted && extendedPathPosition.z % (GRID_SIZE + 1) != 0)
                     {
                         isExtendedPathInterrupted = true;
@@ -156,19 +167,21 @@ public class PlayerMovement : PieceMovement
 
                             Transform digPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer + 1, _checkingCoordinates.UnwrappedIndexBlock);
                             if(digPosition != null) continue;
+
                             Transform queriedPosition = FindBlock(_checkingCoordinates.Clone());
                             if(queriedPosition == null) continue;
+
                             PieceMovement piece = queriedPosition.GetComponentInChildren<PieceMovement>();
                             if(piece != null) isBlockedByPiece = true;
 
-                            CheckedBlockBehaviour checkedBlock = queriedPosition.gameObject.AddComponent<CheckedBlockBehaviour>();
-                            checkedBlock.InitializeBlock(PlayMove, _checkingCoordinates.Clone());
-                            _checkedBlocks.Add(checkedBlock);
+                            RegisterCheckedPosition(_checkingCoordinates.Clone());
+
                             extendedPathPosition.y += height;
                             isExtendedPathInterrupted = isBlockedByPiece;
                             break;
                         }
-                        extendedPathPosition.z += depth * 1;
+
+                        extendedPathPosition.z += depth;
                     }
                 }
                 break;
@@ -184,13 +197,14 @@ public class PlayerMovement : PieceMovement
                         isExtendedPathInterrupted = false;
                         isBlockedByPiece = false;
                         extendedPathPosition = new Vector3Int(horizon, _currentCoordinates.Layer, depth);
+
                         while(!isExtendedPathInterrupted && extendedPathPosition.z % (GRID_SIZE + 1) != 0)
                         {
                             isExtendedPathInterrupted = true;
 
-                            int
-                                nextHorizonBlock = (_currentCoordinates.WrappedIndexBlock.x + extendedPathPosition.x),
-                                nextDepthBlock = (_currentCoordinates.WrappedIndexBlock.y + extendedPathPosition.z);
+                            int nextHorizonBlock = _currentCoordinates.WrappedIndexBlock.x + extendedPathPosition.x;
+                            int nextDepthBlock = _currentCoordinates.WrappedIndexBlock.y + extendedPathPosition.z;
+
                             _checkingCoordinates.WrappedIndexBlock = new Vector2Int
                             (
                                 (nextHorizonBlock + GRID_SIZE) % GRID_SIZE,
@@ -208,20 +222,22 @@ public class PlayerMovement : PieceMovement
 
                                 Transform digPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer + 1, _checkingCoordinates.UnwrappedIndexBlock);
                                 if(digPosition != null) continue;
+
                                 Transform queriedPosition = FindBlock(_checkingCoordinates.Clone());
                                 if(queriedPosition == null) continue;
+
                                 PieceMovement piece = queriedPosition.GetComponentInChildren<PieceMovement>();
                                 if(piece != null) isBlockedByPiece = true;
 
-                                CheckedBlockBehaviour checkedBlock = queriedPosition.gameObject.AddComponent<CheckedBlockBehaviour>();
-                                checkedBlock.InitializeBlock(PlayMove, _checkingCoordinates.Clone());
-                                _checkedBlocks.Add(checkedBlock);
+                                RegisterCheckedPosition(_checkingCoordinates.Clone());
+
                                 extendedPathPosition.y += height;
                                 isExtendedPathInterrupted = isBlockedByPiece;
                                 break;
                             }
-                            extendedPathPosition.x += horizon * 1;
-                            extendedPathPosition.z += depth * 1;
+
+                            extendedPathPosition.x += horizon;
+                            extendedPathPosition.z += depth;
                         }
                     }
                 }
@@ -250,15 +266,20 @@ public class PlayerMovement : PieceMovement
                                 (nextBlock.x + GRID_SIZE) % GRID_SIZE,
                                 (nextBlock.y + GRID_SIZE) % GRID_SIZE
                             );
-
                             _checkingCoordinates.Chunk = new Vector2Int
                             (
                                 _currentCoordinates.Chunk.x + Mathf.FloorToInt((float)nextBlock.x / GRID_SIZE),
                                 _currentCoordinates.Chunk.y + Mathf.FloorToInt((float)nextBlock.y / GRID_SIZE)
                             );
 
-                            // Avoids code redundancy
-                            foreach(Vector2Int direction in new Vector2Int[] { new Vector2Int(horizon, 0), new Vector2Int(0, depth) })
+                            foreach
+                            (
+                                Vector2Int direction in new Vector2Int[]
+                                {
+                                    new Vector2Int(horizon, 0),
+                                    new Vector2Int(0, depth)
+                                }
+                            )
                             {
                                 int relativeBlockUnwrappedIndex =
                                     (GRID_SIZE + (_checkingCoordinates.WrappedIndexBlock.x + direction.x)) % GRID_SIZE
@@ -272,16 +293,19 @@ public class PlayerMovement : PieceMovement
 
                                 Transform digPosition = FindBlock(lShapeChunk, _checkingCoordinates.Layer + 1, relativeBlockUnwrappedIndex);
                                 if(digPosition != null) continue;
+
                                 Transform queriedPosition = FindBlock(lShapeChunk, _checkingCoordinates.Layer, relativeBlockUnwrappedIndex);
                                 if(queriedPosition == null) continue;
 
-                                CheckedBlockBehaviour checkedBlock = queriedPosition.gameObject.AddComponent<CheckedBlockBehaviour>();
-                                checkedBlock.InitializeBlock
+                                RegisterCheckedPosition
                                 (
-                                    PlayMove,
-                                    new Coordinates(lShapeChunk, _checkingCoordinates.Layer, relativeBlockUnwrappedIndex)
+                                    new Coordinates
+                                    (
+                                        lShapeChunk,
+                                        _checkingCoordinates.Layer,
+                                        relativeBlockUnwrappedIndex
+                                    )
                                 );
-                                _checkedBlocks.Add(checkedBlock);
                             }
                         }
                     }
@@ -289,34 +313,65 @@ public class PlayerMovement : PieceMovement
                 break;
             }
         }
-        
-        // Filters out non-match board chunks
-        if(!_gridManager.IsMatchActive) return;
 
-        IReadOnlyList<ChunkBehaviour> matchBoard = _gridManager.CurrentMatchBoardChunks;
-        foreach(CheckedBlockBehaviour checkedBlockBehaviour in _checkedBlocks)
+        // Filters out blocks that are non-existent and from non-match board chunks if there's a match active
+        if(_gridManager.IsMatchActive)
         {
-            bool isInMatchBoard = false;
-            foreach(ChunkBehaviour chunk in matchBoard)
+            IReadOnlyList<ChunkBehaviour> matchBoard = _gridManager.CurrentMatchBoardChunks;
+
+            for(int i = _checkedBlockPositions.Count - 1; i >= 0; i--)
             {
-                if(chunk.ConcatenatingPosition == checkedBlockBehaviour.BlockCoordinates.Chunk)
+                Coordinates coordinates = _checkedBlockPositions[i];
+
+                Transform queriedPosition = FindBlock(coordinates.Clone());
+                if(queriedPosition == null)
                 {
-                    isInMatchBoard = true;
-                    break;
+                    _checkedBlockPositions.RemoveAt(i);
+                    continue;
                 }
+
+                bool isInMatchBoard = false;
+                foreach(ChunkBehaviour chunk in matchBoard)
+                {
+                    if(chunk.ConcatenatingPosition == coordinates.Chunk)
+                    {
+                        isInMatchBoard = true;
+                        break;
+                    }
+                }
+
+                if(!isInMatchBoard) _checkedBlockPositions.RemoveAt(i);
             }
-            if(!isInMatchBoard) Destroy(checkedBlockBehaviour);
+        }
+
+        // Applies the CheckedBlockBehaviour script to the remaining valid blocks
+        StartCoroutine(ApplyCheckedBlockBehaviours());
+    }
+
+    // Applies the CheckedBlockBehaviour script based on what the list of positions is
+    private bool _keepApplyingCheckedBlockBehaviours = true;
+    private IEnumerator ApplyCheckedBlockBehaviours()
+    {
+        _keepApplyingCheckedBlockBehaviours = true;
+        for(int i = 0; i < _checkedBlockPositions.Count; i++)
+        {
+            if(!_keepApplyingCheckedBlockBehaviours) yield break;
+            Coordinates blockCoordinates = _checkedBlockPositions[i];
+            if(blockCoordinates.ToWorldPosition3D() == _currentCoordinates.ToWorldPosition3D()) continue;
+            Transform queriedPosition = FindBlock(blockCoordinates.Clone());
+            CheckedBlockBehaviour checkedBlock = queriedPosition.gameObject.AddComponent<CheckedBlockBehaviour>();
+            checkedBlock.InitializeBlock(PlayMove, blockCoordinates.Clone());
+            _checkedBlocks.Add(checkedBlock);
+            if(_keepApplyingCheckedBlockBehaviours) yield return new WaitForSeconds(0.005f);
         }
     }
 
     public void ResetClickableBlocks()
     {
-        // Resets the clickable blocks
-        foreach(CheckedBlockBehaviour checkedBlock in _checkedBlocks)
-        {
-            Destroy(checkedBlock);
-        }
-        _checkedBlocks = new List<CheckedBlockBehaviour>();
+        _keepApplyingCheckedBlockBehaviours = false;
+        foreach(CheckedBlockBehaviour checkedBlock in _checkedBlocks) checkedBlock.RemoveScript();
+        _checkedBlocks.Clear();
+        _checkedBlockPositions.Clear();
     }
 
     protected void PlayMove(Coordinates blockCoordinates)

@@ -99,6 +99,15 @@ public class ChunkBehaviourEditor : Editor
                 }
             }
         EditorGUILayout.EndVertical();
+
+        // Match board visual cue
+        foreach(var gameObject in targets)
+        {
+            ChunkBehaviour isolatedChunkBehaviour = gameObject as ChunkBehaviour;
+            if(isolatedChunkBehaviour == null) continue;
+
+            isolatedChunkBehaviour.RedrawGridMaterials();
+        }
     }
 
     public void SetMultiChunkBoardMatchState(bool state)
