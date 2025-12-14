@@ -1,3 +1,4 @@
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using static GridManager;
@@ -15,8 +16,7 @@ public class LayerBehaviour : MonoBehaviour
     // Tracks the occupied positions of the layer's grid
     [SerializeField] private bool[] _grid = new bool[GRID_SIZE * GRID_SIZE];
 
-    // Draws its grid to represent an explorable area or a match board
-    
+    // Draws its grid to represent an explorable area or a match board (also with IEnumerator for animation optimization)
     public void RedrawGridMaterials(bool isMatchBoard)
     {
         Material white = isMatchBoard ? GridMaterialsUtility.WhiteRedMaterial : GridMaterialsUtility.WhiteMaterial;
@@ -28,6 +28,26 @@ public class LayerBehaviour : MonoBehaviour
             for(int col = 0; col < GRID_SIZE; col++, index++)
             {
                 if(index >= transform.childCount) return;
+
+                Transform block = transform.GetChild(index);
+                Renderer renderer = block.GetComponent<Renderer>();
+
+                bool isWhite = (index + row) % 2 == 0;
+                renderer.sharedMaterial = isWhite ? white : black;
+            }
+        }
+    }
+    public IEnumerator AnimatedRedrawGridMaterials(bool isMatchBoard)
+    {
+        Material white = isMatchBoard ? GridMaterialsUtility.WhiteRedMaterial : GridMaterialsUtility.WhiteMaterial;
+        Material black = isMatchBoard ? GridMaterialsUtility.BlackRedMaterial : GridMaterialsUtility.BlackMaterial;
+
+        int index = 0;
+        for(int row = 0; row < GRID_SIZE; row++)
+        {
+            for(int col = 0; col < GRID_SIZE; col++, index++)
+            {
+                if(index >= transform.childCount) yield break;
 
                 Transform block = transform.GetChild(index);
                 Renderer renderer = block.GetComponent<Renderer>();

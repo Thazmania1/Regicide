@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using static GridManager;
-using static PieceMovement;
 
 public class PlayerMovement : PieceMovement
 {
@@ -433,6 +432,8 @@ public class PlayerMovement : PieceMovement
     }
     private void Update()
     {
+        if(_gridManager.IsMatchActive && _gridManager.CurrentTurn != MatchTeam.PLAYER) return; // Prevents cheesing the match turn system
+
         // Constantly checks for pattern changes
         PlayerPattern lastPattern = _currentPattern;
         foreach(var patternKey in _patternKeyMap)
@@ -451,7 +452,7 @@ public class PlayerMovement : PieceMovement
             CalculatePieceMoves();
         }
     }
-    private void UpdateIcons()
+    public void UpdateIcons()
     {
         if(_iconMap.TryGetValue(_currentPattern.ToString(), out RectTransform selectedIcon))
         {

@@ -106,7 +106,7 @@ public class ChunkBehaviourEditor : Editor
             ChunkBehaviour isolatedChunkBehaviour = gameObject as ChunkBehaviour;
             if(isolatedChunkBehaviour == null) continue;
 
-            isolatedChunkBehaviour.RedrawGridMaterials();
+            isolatedChunkBehaviour.BoardStateChange();
         }
     }
 

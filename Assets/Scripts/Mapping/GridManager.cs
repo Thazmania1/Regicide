@@ -10,6 +10,7 @@ public class GridManager : MonoBehaviour
     public const int GRID_SIZE = 8;
 
     // UI references
+    [SerializeField] private CanvasGroup _canvasGroup;
     [SerializeField] private GameObject _matchDataPanel;
     [SerializeField] private TextMeshProUGUI _matchTimerText;
     [SerializeField] private TextMeshProUGUI _playerMovesText;
@@ -121,14 +122,15 @@ public class GridManager : MonoBehaviour
         _currentTurn = MatchTeam.PLAYER;
         _currentMatchPlayerPiece.CalculatePieceMoves();
 
-        StartCoroutine(MatchTimer());
+        _runningTimer = StartCoroutine(MatchTimer());
         _playerMovesText.text = $"Moves: {_playerMoves}";
         _matchDataPanel.SetActive(true);
     }
 
+    private Coroutine _runningTimer = null;
     private IEnumerator MatchTimer()
     {
-        while(_isMatchActive)
+        while(true)
         {
             _matchTime += Time.deltaTime;
             _matchTimerText.text = $"Time {_matchTime:F2}s";
@@ -142,10 +144,13 @@ public class GridManager : MonoBehaviour
         _currentTurn = _currentTurn == MatchTeam.PLAYER ? MatchTeam.ENEMIES : MatchTeam.PLAYER;
         if(_currentTurn == MatchTeam.PLAYER)
         {
+            _currentTurn = MatchTeam.ENEMIES; // Prevents the player from switching to another pattern momentarily
+
             // Pans camera to the player
             yield return new WaitForSeconds(0.5f);
-            yield return StartCoroutine(_cameraController.ChangeCameraFocus(_currentMatchPlayerPiece));
+            yield return StartCoroutine(_cameraController.ChangeCameraFocus(_currentMatchPlayerPiece.transform));
             _currentMatchPlayerPiece.CalculatePieceMoves();
+            _currentTurn = MatchTeam.PLAYER;
         }
         else
         {
@@ -160,7 +165,7 @@ public class GridManager : MonoBehaviour
 
                 // Pans camera to the next moving enemy and fakes AI thinking
                 yield return new WaitForSeconds(0.5f);
-                yield return StartCoroutine(_cameraController.ChangeCameraFocus(enemyPiece));
+                yield return StartCoroutine(_cameraController.ChangeCameraFocus(enemyPiece.transform));
                 yield return new WaitForSeconds(Random.Range(0.5f, 1f));
 
                 enemyPiece.CalculatePieceMoves();
@@ -177,24 +182,48 @@ public class GridManager : MonoBehaviour
     // Ends the match with a winner
     public IEnumerator EndMatch(MatchTeam winner)
     {
-        _isMatchActive = false;
-        _matchDataPanel.SetActive(false);
+        StopCoroutine(_runningTimer);
 
         // If the player wins, the match board turns into a regular explorable area, and destroys all enemies that were in it
         // If the enemies wins, the pieces are sent back to their positions before the match started
         float elapsedTime = 0;
         if(winner == MatchTeam.PLAYER)
         {
+            // Fades off the entire UI
+            elapsedTime = 1;
+            while(elapsedTime > 0)
+            {
+                elapsedTime -= Time.deltaTime;
+                _canvasGroup.alpha = elapsedTime;
+                yield return null;
+            }
+            _matchDataPanel.SetActive(false);
+
+            // Scene for match board conversion
+            yield return new WaitForSeconds(0.5f);
+            yield return StartCoroutine(_cameraController.MatchBoardConversionFocus(CurrentMatchBoardChunks));
+            yield return new WaitForSeconds(1f);
             foreach(ChunkBehaviour chunk in _currentMatchBoardChunks)
             {
                 chunk.IsMatchBoard = false;
-                chunk.RedrawGridMaterials();
+                StartCoroutine(chunk.AnimatedBoardStateChange());
+                yield return new WaitForSeconds(0.01f);
             }
             foreach(EnemyMovement enemyPiece in _currentMatchEnemyPieces) Destroy(enemyPiece.gameObject);
+            yield return new WaitForSeconds(1f);
+            yield return StartCoroutine(_cameraController.ChangeCameraFocus(_currentMatchPlayerPiece.transform));
+            
+            // Fades on the entire UI
+            while(elapsedTime < 1)
+            {
+                elapsedTime += Time.deltaTime;
+                _canvasGroup.alpha = elapsedTime;
+                yield return null;
+            }
         }
         else
         {
-            // Black screen fade animation
+            // Black screen fade in animation
             while(elapsedTime < _matchLossCoverTime)
             {
                 elapsedTime += Time.deltaTime;
@@ -205,9 +234,11 @@ public class GridManager : MonoBehaviour
 
             foreach(EnemyMovement enemyPiece in _currentMatchEnemyPieces) enemyPiece.ResetPiece();
             _currentMatchPlayerPiece.ResetPiece();
-            StartCoroutine(_cameraController.ChangeCameraFocus(_currentMatchPlayerPiece, true));
+            yield return StartCoroutine(_cameraController.ChangeCameraFocus(_currentMatchPlayerPiece.transform, true));
+            _matchDataPanel.SetActive(false);
             yield return new WaitForSeconds(0.1f);
 
+            // Black screen fade out animation
             elapsedTime = _matchLossCoverTime;
             while(elapsedTime > 0f)
             {
@@ -219,6 +250,7 @@ public class GridManager : MonoBehaviour
         }
         _currentMatchBoardChunks = new List<ChunkBehaviour>();
         _currentMatchEnemyPieces = new List<EnemyMovement>();
+        _isMatchActive = false;
         _currentMatchPlayerPiece.CalculatePieceMoves();
         _currentMatchPlayerPiece = null;
     }
@@ -227,4 +259,5 @@ public class GridManager : MonoBehaviour
     public bool IsMatchActive => _isMatchActive;
     public IReadOnlyList<ChunkBehaviour> CurrentMatchBoardChunks => _currentMatchBoardChunks;
     public PlayerMovement CurrentMatchPlayerPiece => _currentMatchPlayerPiece;
+    public MatchTeam CurrentTurn => _currentTurn;
 }

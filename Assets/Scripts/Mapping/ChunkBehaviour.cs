@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using static GridManager;
 
@@ -51,16 +52,61 @@ public class ChunkBehaviour : MonoBehaviour
         return new Vector3(gridXCorner, gridYPosition, gridZCorner);
     }
 
-    // Wrapper method to call the layer's redraw grid method while also applying match board logic
+    // Animation must be declared in code due to monobehaviour limitations
+    private static AnimationCurve _boardStateChangeAnimation;
+    static ChunkBehaviour()
+    {
+        Keyframe keyFrame1 = new Keyframe(0f, 0f);
+        Keyframe keyFrame2 = new Keyframe(0.125f, 0.25f);
+        Keyframe keyFrame3 = new Keyframe(0.25f, 0f);
+
+        keyFrame1.inTangent = 0f;
+        keyFrame1.outTangent = 0f;
+
+        keyFrame3.inTangent = 0f;
+        keyFrame3.outTangent = 0f;
+
+        keyFrame2.inTangent = float.PositiveInfinity;
+        keyFrame2.outTangent = float.PositiveInfinity;
+
+        _boardStateChangeAnimation = new AnimationCurve(keyFrame1, keyFrame2, keyFrame3);
+        _boardStateChangeAnimation.SmoothTangents(1, 0f);
+    }
+
+    // Board state change animation
     private bool _wasMatchBoard;
-    public void RedrawGridMaterials()
+    public void BoardStateChange()
     {
         if(_isMatchBoard == _wasMatchBoard)
             return;
         else
             _wasMatchBoard = _isMatchBoard;
 
+        // Redraws the grids in the layers
         foreach(LayerBehaviour layer in transform.GetComponentsInChildren<LayerBehaviour>()) layer.RedrawGridMaterials(_isMatchBoard);
+    }
+    public IEnumerator AnimatedBoardStateChange()
+    {
+        if(_isMatchBoard == _wasMatchBoard)
+            yield break;
+        else
+            _wasMatchBoard = _isMatchBoard;
+
+        // Redraws the grids in the layers
+        foreach(LayerBehaviour layer in transform.GetComponentsInChildren<LayerBehaviour>()) StartCoroutine(layer.AnimatedRedrawGridMaterials(_isMatchBoard));
+
+        // Little bounce animation
+        Keyframe[] animationKeyframes = _boardStateChangeAnimation.keys;
+        float animationTime = animationKeyframes[animationKeyframes.Length - 1].time;
+        float elapsedTime = 0;
+        Vector3 blockPosition = transform.localPosition;
+        while(elapsedTime < animationTime)
+        {
+            elapsedTime += Time.deltaTime;
+            transform.localPosition = new Vector3(blockPosition.x, _boardStateChangeAnimation.Evaluate(elapsedTime), blockPosition.z);
+            yield return null;
+        }
+        transform.localPosition = new Vector3(blockPosition.x, 0, blockPosition.z);
     }
 
     private void Awake()
