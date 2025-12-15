@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class GridManager : MonoBehaviour
 {
-    // Defines the size of the chunks
+    // Defines the size of the grid
     public const int GRID_SIZE = 8;
 
     // UI references

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <link rel="icon" href="../favicon.ico" type="image/x-icon">
+        <title>Mapping system</title>
+
+        <link rel="stylesheet" href="../css/general.css">
+    </head>
+<body>
+    <a id="previous-page" href="../index.html"><img src="../multimedia/back_icon.png" alt="Back icon"></a>
+    <h1>Mapping system</h1>
+        <p>The <strong>map</strong> is based on a hierarchic system.</p>
+        <ol>
+            <li><strong>The grid</strong>: The manager of the <strong>map</strong>.</li>
+            <li><strong>Chunks</strong>: The divisions of <strong>the grid</strong>.</li>
+            <li><strong>Layers</strong>: The Y axis of the <strong>chunks</strong>.</li>
+            <li><strong>Blocks</strong>: The X and Z axis of the <strong>chunks</strong> and the grid of the <strong>layers</strong>.</li>
+        </ol>
+        <p>This allows for a flexible and optimized <strong>mapping system</strong>.</p>
+
+        <h2><img src="../multimedia/cs_logo.png" alt="C# logo">GridManager</h2>
+            <p>Defines a public constant grid size, both for the <strong>chunks</strong> and the grids of <strong>blocks</strong>.</p>
+            <code>
+public class GridManager : MonoBehaviour
+{
+    // Defines the size of the grid
+    public const int GRID_SIZE = 8;
+
+    ...
+}
+            </code>
+            <p><strong>The grid</strong> also handles <strong>matches</strong>, <a href="./matches.html">see here</a>.</p>
+
+            <h3><img src="../multimedia/cs_logo.png" alt="C# logo">GridManagerEditor</h3>
+                <p>A simple <code>Editor</code> script for <code>GridManager</code>.</p>
+                <p>Makes <strong>the grid</strong>'s <code>Transform</code> component immutable, and allows to generate chunks through the <code>GridManager</code>'s script inspector window.</p>
+                <code>
+using UnityEditor;
+using UnityEngine;
+
+[CustomEditor(typeof(GridManager))]
+public class GridManagerEditor : Editor
+{
+    public override void OnInspectorGUI()
+    {
+        // UI references
+        EditorGUILayout.BeginVertical("box");
+            base.OnInspectorGUI();
+        EditorGUILayout.EndVertical();
+
+        GridManager gridManager = target as GridManager;
+        Transform gridManagerTransform = gridManager.transform;
+
+        serializedObject.Update();
+
+        EditorGUILayout.BeginVertical("box");
+            if(GUILayout.Button("Generate new chunk"))
+            {
+                GameObject newChunk = new GameObject();
+                Undo.RegisterCreatedObjectUndo(newChunk, "Generated new chunk");
+                newChunk.transform.parent = gridManagerTransform;
+                newChunk.isStatic = true;
+                newChunk.AddComponent&lt;ChunkBehaviour&gt;().TranslateConcatenatingPosition();
+            }
+        EditorGUILayout.EndVertical();
+
+        serializedObject.ApplyModifiedProperties();
+
+        // The grid layout must never be manipulated
+        gridManagerTransform.position = new Vector3(0, 0, 0);
+        gridManagerTransform.rotation = Quaternion.identity;
+        gridManagerTransform.localScale = new Vector3(1, 1, 1);
+    }
+}
+                </code>
+</body>
+</html>

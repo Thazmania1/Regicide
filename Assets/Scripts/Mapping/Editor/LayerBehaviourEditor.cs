@@ -219,7 +219,6 @@ public class LayerBehaviourEditor : Editor
     private void SpawnEnemyPiece<T>(string pieceName, LayerBehaviour layerBehaviour, int blockUnwrappedIndex) where T : EnemyMovement
     {
         // Loads the FBX prefab from Resources and assigns the material
-        // TODO: Please make this motodof work
         GameObject fbxPrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Scripts/Mapping/Resources/{pieceName.ToLower()}HighPoly.fbx");
         GameObject newPiece;
         if(fbxPrefab != null)
