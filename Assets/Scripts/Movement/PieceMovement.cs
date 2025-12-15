@@ -117,7 +117,7 @@ public abstract class PieceMovement : MonoBehaviour
         else
         {
             transform.SetParent(queriedBlock);
-            transform.localPosition = new Vector3(0, 1, 0);
+            transform.localPosition = new Vector3(0f, 0.5f, 0f);
         }
 
         // Resets the pathfinder
@@ -127,7 +127,7 @@ public abstract class PieceMovement : MonoBehaviour
     protected IEnumerator PieceMovementAnimation()
     {
         Vector3 startPosition = transform.localPosition;
-        Vector3 targetPosition = new Vector3(0f, 1f, 0f);
+        Vector3 targetPosition = new Vector3(0f, 0.5f, 0f);
 
         Keyframe[] animationKeyframes = _pieceMovementAnimation.keys;
         float animationTime = animationKeyframes[animationKeyframes.Length - 1].time;

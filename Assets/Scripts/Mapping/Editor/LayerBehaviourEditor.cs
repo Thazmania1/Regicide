@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using static GridManager;
 using static ChunkBehaviour;
+using static GridManager;
 using static PieceMovement;
 
 [CustomEditor(typeof(LayerBehaviour))]
@@ -185,15 +185,8 @@ public class LayerBehaviourEditor : Editor
         // Destroys the old physical grid
         while(layerTransform.childCount > 0) Undo.DestroyObjectImmediate(layerTransform.GetChild(0).gameObject);
 
-        // Ensure materials are loaded
-        GridMaterialsUtility.WhiteMaterial.ToString();
-        GridMaterialsUtility.BlackMaterial.ToString();
-        GridMaterialsUtility.WhiteRedMaterial.ToString();
-        GridMaterialsUtility.BlackRedMaterial.ToString();
-
         IReadOnlyList<bool> grid = layerBehaviour.Grid;
         Vector3 gridStartPoint = CalculateChunkCorner(layerTransform);
-
         for(int row = 0; row < GRID_SIZE; row++)
         {
             int unwrappedRow = row * GRID_SIZE;
@@ -219,19 +212,33 @@ public class LayerBehaviourEditor : Editor
             }
         }
 
-        // Draws the grid accordingly
+        // Draws the grid's materials accordingly
         layerBehaviour.RedrawGridMaterials(layerBehaviour.GetComponentInParent<ChunkBehaviour>().IsMatchBoard);
     }
 
-    // Generic enemy piece spawner
     private void SpawnEnemyPiece<T>(string pieceName, LayerBehaviour layerBehaviour, int blockUnwrappedIndex) where T : EnemyMovement
     {
-        GameObject newPiece = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        // Loads the FBX prefab from Resources and assigns the material
+        // TODO: Please make this motodof work
+        GameObject fbxPrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Scripts/Mapping/Resources/{pieceName.ToLower()}HighPoly.fbx");
+        GameObject newPiece;
+        if(fbxPrefab != null)
+        {
+            newPiece = Instantiate(fbxPrefab);
+            newPiece.transform.localScale = Vector3.one;
+        }
+        else
+            newPiece = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        newPiece.GetComponent<MeshRenderer>().sharedMaterial = GridMaterialsUtility.BlackMaterial;
+
+        // Registers undo in editor
         Undo.RegisterCreatedObjectUndo(newPiece, $"Spawn enemy {pieceName}");
 
+        // Sets hierarchy
         newPiece.transform.parent = layerBehaviour.transform.root;
         newPiece.name = pieceName;
 
+        // Assigns movement script
         T newPieceScript = newPiece.AddComponent<T>();
         newPieceScript.CurrentCoordinates = new Coordinates
         (
