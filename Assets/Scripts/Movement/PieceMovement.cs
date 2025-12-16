@@ -1,7 +1,7 @@
 using System.Collections;
 using System.Linq;
 using UnityEngine;
-using static GridManager;
+using static VirtualSpaceManager;
 
 // Used for individual piece movement patterns
 public abstract class PieceMovement : MonoBehaviour
@@ -74,12 +74,12 @@ public abstract class PieceMovement : MonoBehaviour
     // Tracks what position is being checked
     protected Coordinates _checkingCoordinates = new Coordinates();
 
-    // Reference to the piece's grid manager
-    protected GridManager _gridManager;
+    // Reference to the piece's virtual piece manager
+    protected VirtualSpaceManager _virtualPieceManager;
 
     private void Start()
     {
-        _gridManager = GetGrid.GetComponent<GridManager>();
+        _virtualPieceManager = GetVirtualSpace.GetComponent<VirtualSpaceManager>();
         TranslatePiecePosition();
         CalculatePieceMoves();
     }
@@ -146,7 +146,7 @@ public abstract class PieceMovement : MonoBehaviour
     // Queries
     public Transform FindChunk(Vector2Int concatenatingPositionQuery)
     {
-        var queriedChunk = GetGrid
+        var queriedChunk = GetVirtualSpace
             .GetComponentsInChildren<ChunkBehaviour>()
             .FirstOrDefault(chunk => chunk != null && chunk.ConcatenatingPosition == concatenatingPositionQuery);
 
@@ -216,7 +216,7 @@ public abstract class PieceMovement : MonoBehaviour
     public Transform GetBlock => transform.parent;
     public Transform GetLayer => transform.parent.parent;
     public Transform GetChunk => transform.parent.parent.parent;
-    public Transform GetGrid => transform.root;
+    public Transform GetVirtualSpace => transform.root;
 
     // Serialization getters
     public string CurrentCoordinatesReference => nameof(_currentCoordinates);

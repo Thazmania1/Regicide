@@ -1,0 +1,29 @@
+nav
+{
+    width: 100%;
+
+    gap: 25px;
+}
+nav a
+{
+    display: block;
+    flex: 0 0 60px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 3px solid var(--rgb250);
+    border-radius: 10px;
+
+    text-decoration: none;
+    font-size: large;
+
+    transition: scale 0.1s ease, box-shadow 0.1s ease, rotate 0.1s ease;
+}
+nav a:hover
+{
+    scale: 1.025;
+    box-shadow: 0 0 7.5px 0 var(--rgb250);
+    rotate: 0.5deg;
+}

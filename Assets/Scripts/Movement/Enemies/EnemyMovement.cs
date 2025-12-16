@@ -16,7 +16,7 @@ public abstract class EnemyMovement : PieceMovement
 
     private void Start()
     {
-        _gridManager = transform.root.GetComponent<GridManager>();
+        _virtualPieceManager = transform.root.GetComponent<VirtualSpaceManager>();
         TranslatePiecePosition();
         _preMatchCoordinates = _currentCoordinates.Clone();
         _lastCoordinates = _currentCoordinates.Clone();
@@ -26,7 +26,7 @@ public abstract class EnemyMovement : PieceMovement
     protected void PlayMove()
     {
         // Filters out non-match board chunks
-        IReadOnlyList<ChunkBehaviour> matchBoard = _gridManager.CurrentMatchBoardChunks;
+        IReadOnlyList<ChunkBehaviour> matchBoard = _virtualPieceManager.CurrentMatchBoardChunks;
         for(int i = 0; i < _calculatedMoves.Count; i++)
         {
             bool isInMatchBoard = false;
@@ -46,7 +46,7 @@ public abstract class EnemyMovement : PieceMovement
             }
         }
 
-        Coordinates playerPieceCoordinates = _gridManager.CurrentMatchPlayerPiece.CurrentCoordinates;
+        Coordinates playerPieceCoordinates = _virtualPieceManager.CurrentMatchPlayerPiece.CurrentCoordinates;
 
         Coordinates bestMove = null;
         float bestDistance = float.MaxValue;
@@ -65,7 +65,7 @@ public abstract class EnemyMovement : PieceMovement
         TranslatePiecePosition();
 
         // Tries to take the player piece
-        TakePiece(_gridManager.CurrentMatchPlayerPiece);
+        TakePiece(_virtualPieceManager.CurrentMatchPlayerPiece);
     }
 
     public override void ResetPiece()

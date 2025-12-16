@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEditor;
 using static PieceMovement;
-using static GridManager;
+using static VirtualSpaceManager;
 
 [CustomEditor(typeof(PieceMovement), true)]
 public class PieceMovementEditor : Editor

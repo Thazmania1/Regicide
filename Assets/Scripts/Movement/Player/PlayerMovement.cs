@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
-using static GridManager;
+using static VirtualSpaceManager;
 
 public class PlayerMovement : PieceMovement
 {
@@ -314,9 +314,9 @@ public class PlayerMovement : PieceMovement
         }
 
         // Filters out blocks that are non-existent and from non-match board chunks if there's a match active
-        if(_gridManager.IsMatchActive)
+        if(_virtualPieceManager.IsMatchActive)
         {
-            IReadOnlyList<ChunkBehaviour> matchBoard = _gridManager.CurrentMatchBoardChunks;
+            IReadOnlyList<ChunkBehaviour> matchBoard = _virtualPieceManager.CurrentMatchBoardChunks;
 
             for(int i = _checkedBlockPositions.Count - 1; i >= 0; i--)
             {
@@ -375,7 +375,7 @@ public class PlayerMovement : PieceMovement
 
     protected void PlayMove(Coordinates blockCoordinates)
     {
-        if(!_gridManager.IsMatchActive) _preMatchCoordinates = _currentCoordinates.Clone();
+        if(!_virtualPieceManager.IsMatchActive) _preMatchCoordinates = _currentCoordinates.Clone();
         _currentCoordinates = blockCoordinates.Clone();
         TranslatePiecePosition();
         ResetClickableBlocks();
@@ -385,13 +385,13 @@ public class PlayerMovement : PieceMovement
         if(enemyPiece != null) TakePiece(enemyPiece);
 
         // If the player moves to a match board, it will begin a match
-        if(!_gridManager.IsMatchActive)
-            if(_gridManager.IsChunkMatchBoard(_currentCoordinates.Chunk))
-                _gridManager.BeginMatch(_currentCoordinates.Chunk);
+        if(!_virtualPieceManager.IsMatchActive)
+            if(_virtualPieceManager.IsChunkMatchBoard(_currentCoordinates.Chunk))
+                _virtualPieceManager.BeginMatch(_currentCoordinates.Chunk);
             else
                 CalculatePieceMoves();
         else
-            StartCoroutine(_gridManager.YieldTurn());
+            StartCoroutine(_virtualPieceManager.YieldTurn());
     }
 
     // Player pattern selection logic
@@ -432,7 +432,7 @@ public class PlayerMovement : PieceMovement
     }
     private void Update()
     {
-        if(_gridManager.IsMatchActive && _gridManager.CurrentTurn != MatchTeam.PLAYER) return; // Prevents cheesing the match turn system
+        if(_virtualPieceManager.IsMatchActive && _virtualPieceManager.CurrentTurn != MatchTeam.PLAYER) return; // Prevents cheesing the match turn system
 
         // Constantly checks for pattern changes
         PlayerPattern lastPattern = _currentPattern;

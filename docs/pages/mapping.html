@@ -4,77 +4,605 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        <link rel="icon" href="../favicon.ico" type="image/x-icon">
+        <link rel="icon" href="../favicon.ico">
         <title>Mapping system</title>
 
         <link rel="stylesheet" href="../css/general.css">
     </head>
-<body>
     <a id="previous-page" href="../index.html"><img src="../multimedia/back_icon.png" alt="Back icon"></a>
-    <h1>Mapping system</h1>
-        <p>The <strong>map</strong> is based on a hierarchic system.</p>
-        <ol>
-            <li><strong>The grid</strong>: The manager of the <strong>map</strong>.</li>
-            <li><strong>Chunks</strong>: The divisions of <strong>the grid</strong>.</li>
-            <li><strong>Layers</strong>: The Y axis of the <strong>chunks</strong>.</li>
-            <li><strong>Blocks</strong>: The X and Z axis of the <strong>chunks</strong> and the grid of the <strong>layers</strong>.</li>
-        </ol>
-        <p>This allows for a flexible and optimized <strong>mapping system</strong>.</p>
+    <body>
+        <h1>Mapping system</h1>
+            
+            <h2><img src="../multimedia/cs_logo.png" alt="C# logo">VirtualSpaceManager</h2>
 
-        <h2><img src="../multimedia/cs_logo.png" alt="C# logo">GridManager</h2>
-            <p>Defines a public constant grid size, both for the <strong>chunks</strong> and the grids of <strong>blocks</strong>.</p>
-            <code>
-public class GridManager : MonoBehaviour
-{
-    // Defines the size of the grid
-    public const int GRID_SIZE = 8;
+                <h3>Global variables</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>GRID_SIZE</td>
+                                <td>int</td>
+                                <td>public const</td>
+                                <td>Defines the width and height of the virtual match grid.</td>
+                            </tr>
+                            <tr>
+                                <td>_canvasGroup</td>
+                                <td>CanvasGroup</td>
+                                <td>private [SerializeField]</td>
+                                <td>Controls fading of the match UI.</td>
+                            </tr>
+                            <tr>
+                                <td>_matchDataPanel</td>
+                                <td>GameObject</td>
+                                <td>private [SerializeField]</td>
+                                <td>Container for match-related UI elements.</td>
+                            </tr>
+                            <tr>
+                                <td>_matchTimerText</td>
+                                <td>TextMeshProUGUI</td>
+                                <td>private [SerializeField]</td>
+                                <td>Displays elapsed match time.</td>
+                            </tr>
+                            <tr>
+                                <td>_playerMovesText</td>
+                                <td>TextMeshProUGUI</td>
+                                <td>private [SerializeField]</td>
+                                <td>Displays number of player moves.</td>
+                            </tr>
+                            <tr>
+                                <td>_matchLossCover</td>
+                                <td>Image</td>
+                                <td>private [SerializeField]</td>
+                                <td>UI overlay used during match loss fade.</td>
+                            </tr>
+                            <tr>
+                                <td>_matchLossCoverTime</td>
+                                <td>float</td>
+                                <td>private [SerializeField]</td>
+                                <td>Duration of the loss fade animation.</td>
+                            </tr>
+                            <tr>
+                                <td>_cameraController</td>
+                                <td>CameraController</td>
+                                <td>private [SerializeField]</td>
+                                <td>Handles camera focus and transitions.</td>
+                            </tr>
+                            <tr>
+                                <td>_isMatchActive</td>
+                                <td>bool</td>
+                                <td>private</td>
+                                <td>Indicates whether a match is currently active.</td>
+                            </tr>
+                            <tr>
+                                <td>_currentMatchBoardChunks</td>
+                                <td>List&lt;ChunkBehaviour&gt;</td>
+                                <td>private</td>
+                                <td>All chunks participating in the current match board.</td>
+                            </tr>
+                            <tr>
+                                <td>_matchTime</td>
+                                <td>float</td>
+                                <td>private</td>
+                                <td>Elapsed time since match start.</td>
+                            </tr>
+                            <tr>
+                                <td>_playerMoves</td>
+                                <td>int</td>
+                                <td>private</td>
+                                <td>Number of turns taken by the player.</td>
+                            </tr>
+                            <tr>
+                                <td>_currentMatchEnemyPieces</td>
+                                <td>List&lt;EnemyMovement&gt;</td>
+                                <td>private</td>
+                                <td>Enemy pieces currently active in the match.</td>
+                            </tr>
+                            <tr>
+                                <td>_currentMatchPlayerPiece</td>
+                                <td>PlayerMovement</td>
+                                <td>private</td>
+                                <td>Reference to the player's match piece.</td>
+                            </tr>
+                            <tr>
+                                <td>_currentTurn</td>
+                                <td>MatchTeam</td>
+                                <td>private</td>
+                                <td>Indicates which team currently has the turn.</td>
+                            </tr>
+                            <tr>
+                                <td>_runningTimer</td>
+                                <td>Coroutine</td>
+                                <td>private</td>
+                                <td>Reference to the running match timer coroutine.</td>
+                            </tr>
+                        </tbody>
+                    </table>
 
-    ...
-}
-            </code>
-            <p><strong>The grid</strong> also handles <strong>matches</strong>, <a href="./matches.html">see here</a>.</p>
+                <h3>Methods</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Parameters</th>
+                                <th>Return Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>IsChunkMatchBoard</td>
+                                <td>Vector2Int chunkPosition</td>
+                                <td>bool</td>
+                                <td>public</td>
+                                <td>Checks whether a given chunk position belongs to an active match board.</td>
+                            </tr>
+                            <tr>
+                                <td>BeginMatch</td>
+                                <td>Vector2Int matchBoardOriginChunk</td>
+                                <td>void</td>
+                                <td>public</td>
+                                <td>Initializes a match, finds adjacent match board chunks, and sets up pieces.</td>
+                            </tr>
+                            <tr>
+                                <td>MatchTimer</td>
+                                <td>—</td>
+                                <td>IEnumerator</td>
+                                <td>private</td>
+                                <td>Continuously updates match time and timer UI.</td>
+                            </tr>
+                            <tr>
+                                <td>YieldTurn</td>
+                                <td>—</td>
+                                <td>IEnumerator</td>
+                                <td>public</td>
+                                <td>Switches turns between teams and processes enemy and player actions.</td>
+                            </tr>
+                            <tr>
+                                <td>EndMatch</td>
+                                <td>MatchTeam winner</td>
+                                <td>IEnumerator</td>
+                                <td>public</td>
+                                <td>Ends the match, handling win or loss state transitions.</td>
+                            </tr>
+                        </tbody>
+                    </table>
 
-            <h3><img src="../multimedia/cs_logo.png" alt="C# logo">GridManagerEditor</h3>
-                <p>A simple <code>Editor</code> script for <code>GridManager</code>.</p>
-                <p>Makes <strong>the grid</strong>'s <code>Transform</code> component immutable, and allows to generate chunks through the <code>GridManager</code>'s script inspector window.</p>
-                <code>
-using UnityEditor;
-using UnityEngine;
+                <h3>Classes and Enums</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Kind</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>MatchTeam</td>
+                                <td>Enum</td>
+                                <td>public</td>
+                                <td>Represents the teams that can take turns during a match.</td>
+                            </tr>
+                        </tbody>
+                    </table>
 
-[CustomEditor(typeof(GridManager))]
-public class GridManagerEditor : Editor
-{
-    public override void OnInspectorGUI()
-    {
-        // UI references
-        EditorGUILayout.BeginVertical("box");
-            base.OnInspectorGUI();
-        EditorGUILayout.EndVertical();
+            <h2><img src="../multimedia/cs_logo.png" alt="C# logo">VirtualSpaceManagerEditor</h2>
 
-        GridManager gridManager = target as GridManager;
-        Transform gridManagerTransform = gridManager.transform;
+                <h3>Methods</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Parameters</th>
+                                <th>Return Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>OnInspectorGUI</td>
+                                <td>—</td>
+                                <td>void</td>
+                                <td>public override</td>
+                                <td>Renders and controls the custom Inspector UI for the VirtualSpaceManager component.</td>
+                            </tr>
+                        </tbody>
+                    </table>
 
-        serializedObject.Update();
+            <h2><img src="../multimedia/cs_logo.png" alt="C# logo">ChunkBehaviour</h2>
 
-        EditorGUILayout.BeginVertical("box");
-            if(GUILayout.Button("Generate new chunk"))
-            {
-                GameObject newChunk = new GameObject();
-                Undo.RegisterCreatedObjectUndo(newChunk, "Generated new chunk");
-                newChunk.transform.parent = gridManagerTransform;
-                newChunk.isStatic = true;
-                newChunk.AddComponent&lt;ChunkBehaviour&gt;().TranslateConcatenatingPosition();
-            }
-        EditorGUILayout.EndVertical();
+                <h3>Global variables</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>_isMatchBoard</td>
+                                <td>bool</td>
+                                <td>private [SerializeField]</td>
+                                <td>Indicates whether this chunk currently behaves as a match board.</td>
+                            </tr>
+                            <tr>
+                                <td>_concatenatingPosition</td>
+                                <td>Vector2Int</td>
+                                <td>private [SerializeField]</td>
+                                <td>Grid-based position used to place the chunk in world space.</td>
+                            </tr>
+                            <tr>
+                                <td>_boardStateChangeAnimation</td>
+                                <td>AnimationCurve</td>
+                                <td>private static</td>
+                                <td>Animation curve used for match board state transition effects.</td>
+                            </tr>
+                            <tr>
+                                <td>_wasMatchBoard</td>
+                                <td>bool</td>
+                                <td>private</td>
+                                <td>Stores the previous match board state to detect state changes.</td>
+                            </tr>
+                        </tbody>
+                    </table>
 
-        serializedObject.ApplyModifiedProperties();
+                <h3>Methods</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Parameters</th>
+                                <th>Return Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>TranslateConcatenatingPosition</td>
+                                <td>—</td>
+                                <td>void</td>
+                                <td>public</td>
+                                <td>Applies the concatenating grid position to the chunk’s transform and name.</td>
+                            </tr>
+                            <tr>
+                                <td>CalculateChunkCorner</td>
+                                <td>Transform chunkOrLayer, bool isHorizonNegative, bool isDepthNegative, bool hasOffset</td>
+                                <td>Vector3</td>
+                                <td>public static</td>
+                                <td>Calculates a world-space corner position of a chunk or layer.</td>
+                            </tr>
+                            <tr>
+                                <td>CalculateChunkCorner</td>
+                                <td>Transform chunkOrLayer, int horizonNegation, int depthNegation, bool hasOffset</td>
+                                <td>Vector3</td>
+                                <td>public static</td>
+                                <td>Calculates a world-space corner position using explicit axis negation.</td>
+                            </tr>
+                            <tr>
+                                <td>BoardStateChange</td>
+                                <td>—</td>
+                                <td>void</td>
+                                <td>public</td>
+                                <td>Immediately updates visuals when the match board state changes.</td>
+                            </tr>
+                            <tr>
+                                <td>AnimatedBoardStateChange</td>
+                                <td>—</td>
+                                <td>IEnumerator</td>
+                                <td>public</td>
+                                <td>Animates the transition when the match board state changes.</td>
+                            </tr>
+                            <tr>
+                                <td>Awake</td>
+                                <td>—</td>
+                                <td>void</td>
+                                <td>private</td>
+                                <td>Initializes the cached match board state.</td>
+                            </tr>
+                        </tbody>
+                    </table>
 
-        // The grid layout must never be manipulated
-        gridManagerTransform.position = new Vector3(0, 0, 0);
-        gridManagerTransform.rotation = Quaternion.identity;
-        gridManagerTransform.localScale = new Vector3(1, 1, 1);
-    }
-}
-                </code>
-</body>
+            <h2><img src="../multimedia/cs_logo.png" alt="C# logo">ChunkBehaviourEditor</h2>
+
+                <h3>Methods</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Parameters</th>
+                                <th>Return Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>OnInspectorGUI</td>
+                                <td>—</td>
+                                <td>void</td>
+                                <td>public override</td>
+                                <td>Renders and manages the custom Inspector UI for ChunkBehaviour, supporting single and multi-selection.</td>
+                            </tr>
+                            <tr>
+                                <td>SetMultiChunkBoardMatchState</td>
+                                <td>bool state</td>
+                                <td>void</td>
+                                <td>public</td>
+                                <td>Sets the match board state for all selected ChunkBehaviour objects.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+            <h2><img src="../multimedia/cs_logo.png" alt="C# logo">LayerBehaviour</h2>
+
+                <h3>Global variables</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>_height</td>
+                                <td>int</td>
+                                <td>private [SerializeField]</td>
+                                <td>Vertical index used to position the layer in local space.</td>
+                            </tr>
+                            <tr>
+                                <td>_grid</td>
+                                <td>bool[]</td>
+                                <td>private [SerializeField]</td>
+                                <td>Stores occupancy state of each cell in the layer grid.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                <h3>Methods</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Parameters</th>
+                                <th>Return Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>TranslateHeightPosition</td>
+                                <td>—</td>
+                                <td>void</td>
+                                <td>public</td>
+                                <td>Applies the layer height to the GameObject name and local position.</td>
+                            </tr>
+                            <tr>
+                                <td>RedrawGridMaterials</td>
+                                <td>bool isMatchBoard</td>
+                                <td>void</td>
+                                <td>public</td>
+                                <td>Updates grid materials to reflect explorable or match board state.</td>
+                            </tr>
+                            <tr>
+                                <td>AnimatedRedrawGridMaterials</td>
+                                <td>bool isMatchBoard</td>
+                                <td>IEnumerator</td>
+                                <td>public</td>
+                                <td>Animates grid material changes for match board transitions.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+            <h2><img src="../multimedia/cs_logo.png" alt="C# logo">LayerBehaviourEditor</h2>
+
+                <h3>Methods</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Parameters</th>
+                                <th>Return Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>OnEnable</td>
+                                <td>—</td>
+                                <td>void</td>
+                                <td>private</td>
+                                <td>Hides Unity tools and subscribes to the scene GUI for custom layer grid handling.</td>
+                            </tr>
+                            <tr>
+                                <td>OnDisable</td>
+                                <td>—</td>
+                                <td>void</td>
+                                <td>private</td>
+                                <td>Restores Unity tools and unsubscribes from the scene GUI.</td>
+                            </tr>
+                            <tr>
+                                <td>OnInspectorGUI</td>
+                                <td>—</td>
+                                <td>void</td>
+                                <td>public override</td>
+                                <td>Renders the custom inspector for LayerBehaviour, handling single and multi-selection editing and piece spawning.</td>
+                            </tr>
+                            <tr>
+                                <td>OnGlobalSceneGUI</td>
+                                <td>SceneView sceneView</td>
+                                <td>void</td>
+                                <td>private</td>
+                                <td>Handles scene GUI drawing for all selected LayerBehaviour objects.</td>
+                            </tr>
+                            <tr>
+                                <td>DrawHandleGrid</td>
+                                <td>LayerBehaviour layerBehaviour, SerializedObject isolatedSerializedObject</td>
+                                <td>void</td>
+                                <td>private</td>
+                                <td>Draws an interactable grid for toggling physical blocks in the scene view.</td>
+                            </tr>
+                            <tr>
+                                <td>InitializePhysicalGrid</td>
+                                <td>—</td>
+                                <td>void</td>
+                                <td>private</td>
+                                <td>Initializes or resets the physical grid if it is not already populated.</td>
+                            </tr>
+                            <tr>
+                                <td>ResetPhysicalGrid</td>
+                                <td>LayerBehaviour layerBehaviour</td>
+                                <td>void</td>
+                                <td>private</td>
+                                <td>Recreates the layer's grid of physical blocks in the scene based on occupancy data.</td>
+                            </tr>
+                            <tr>
+                                <td>SpawnEnemyPiece</td>
+                                <td>string pieceName, LayerBehaviour layerBehaviour, int blockUnwrappedIndex</td>
+                                <td>void</td>
+                                <td>private generic T : EnemyMovement</td>
+                                <td>Spawns a new enemy piece of type T at the specified grid position with undo support.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+            <h2><img src="../multimedia/cs_logo.png" alt="C# logo">MapGizmos</h2>
+
+                <h3>Methods</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Parameters</th>
+                                <th>Return Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>OnSceneGUI</td>
+                                <td>SceneView sceneView</td>
+                                <td>void</td>
+                                <td>private static</td>
+                                <td>Draws gizmos for all chunks in the scene, including corner lines and name labels, within a specified camera distance.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+            <h2><img src="../multimedia/cs_logo.png" alt="C# logo">GridMaterialsUtility</h2>
+
+                <h3>Global variables</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>_whiteMaterial</td>
+                                <td>Material</td>
+                                <td>private static</td>
+                                <td>Cached white grid material.</td>
+                            </tr>
+                            <tr>
+                                <td>_blackMaterial</td>
+                                <td>Material</td>
+                                <td>private static</td>
+                                <td>Cached black grid material.</td>
+                            </tr>
+                            <tr>
+                                <td>_whiteRedMaterial</td>
+                                <td>Material</td>
+                                <td>private static</td>
+                                <td>Cached white-red grid material for match boards.</td>
+                            </tr>
+                            <tr>
+                                <td>_blackRedMaterial</td>
+                                <td>Material</td>
+                                <td>private static</td>
+                                <td>Cached black-red grid material for match boards.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                <h3>Methods</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Parameters</th>
+                                <th>Return Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>WhiteMaterial</td>
+                                <td>—</td>
+                                <td>Material</td>
+                                <td>public static</td>
+                                <td>Gets or creates the white grid material.</td>
+                            </tr>
+                            <tr>
+                                <td>BlackMaterial</td>
+                                <td>—</td>
+                                <td>Material</td>
+                                <td>public static</td>
+                                <td>Gets or creates the black grid material.</td>
+                            </tr>
+                            <tr>
+                                <td>WhiteRedMaterial</td>
+                                <td>—</td>
+                                <td>Material</td>
+                                <td>public static</td>
+                                <td>Gets or creates the white-red grid material.</td>
+                            </tr>
+                            <tr>
+                                <td>BlackRedMaterial</td>
+                                <td>—</td>
+                                <td>Material</td>
+                                <td>public static</td>
+                                <td>Gets or creates the black-red grid material.</td>
+                            </tr>
+                            <tr>
+                                <td>EnsureMaterials</td>
+                                <td>—</td>
+                                <td>void</td>
+                                <td>private static</td>
+                                <td>Ensures all grid materials are loaded or created if missing.</td>
+                            </tr>
+                            <tr>
+                                <td>CreateMaterial</td>
+                                <td>Color color, string name, string path, out Material mat</td>
+                                <td>void</td>
+                                <td>private static</td>
+                                <td>Creates a new material with the given color and saves it to the asset database.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+    </body>
 </html>

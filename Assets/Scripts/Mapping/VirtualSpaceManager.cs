@@ -4,7 +4,7 @@ using TMPro;
 using System.Collections;
 using UnityEngine.UI;
 
-public class GridManager : MonoBehaviour
+public class VirtualSpaceManager : MonoBehaviour
 {
     // Defines the size of the grid
     public const int GRID_SIZE = 8;

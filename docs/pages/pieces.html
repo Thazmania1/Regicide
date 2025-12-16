@@ -4,642 +4,188 @@
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        <link rel="icon" href="../favicon.ico" type="image/x-icon">
-        <title>Mapping system</title>
+        <link rel="icon" href="../favicon.ico">
+        <title>Pieces</title>
 
         <link rel="stylesheet" href="../css/general.css">
+        <link rel="stylesheet" href="../css/menu.css">
     </head>
-<body>
-    <a id="previous-page" href="../index.html"><img src="../multimedia/back_icon.png" alt="Back icon"></a>
-    <h1>Pieces</h1>
-        <p>(This section is expected to be updated in the future since there are plans for further development. So far, only the player's movement has been experimented with.)</p>
-        <p>Just like regular chess, <strong>the grid</strong> has <strong>pieces</strong>, each with their unique movement patterns.</p>
+    <body>
+        <a id="previous-page" href="../index.html"><img src="../multimedia/back_icon.png" alt="Back icon"></a>
+        <h1>Pieces</h1>
 
             <h2><img src="../multimedia/cs_logo.png" alt="C# logo">PieceMovement</h2>
-                <p>An abstract class that allows to create custom <strong>pieces</strong> all with a shared system.</p>
 
-                <h3>Coordinates</h3>
-                    <p>This script has a class defined (<code>Coordinates</code>) to represent a position in <strong>the grid</strong>, and every <strong>piece</strong> tracks two <code>Coordinates</code> at all times:</p>
-                    <ol>
-                        <li><code>_currentCoordinates</code>: Its position in the grid.</code></li>
-                        <li><code>_checkingCoordinates</code>: The position in the grid it's currently checking.</li>
-                    </ol>
-                    <code>
-// Tracks a chunk position, a layer height, and a block position
-[System.Serializable] public class Coordinates
-{
-    [SerializeField] private Vector2Int _chunk;
-    [SerializeField] private int _layer;
-    [SerializeField] private Vector2Int _block;
-
-    public Coordinates(Vector2Int chunk, int layer, Vector2Int wrappedIndexBlock)
-    {
-        _chunk = chunk;
-        _layer = layer;
-        _block = wrappedIndexBlock;
-    }
-
-    public Coordinates(Vector2Int chunk, int layer, int unwrappedIndexBlock)
-    {
-        _chunk = chunk;
-        _layer = layer;
-        _block = new Vector2Int(unwrappedIndexBlock % GRID_SIZE, unwrappedIndexBlock / GRID_SIZE);
-    }
-
-    public Coordinates() { }
-
-    public Coordinates Clone()
-    {
-        return new Coordinates(_chunk, _layer, _block);
-    }
-
-    // Getters and setters
-    public Vector2Int Chunk {get => _chunk; set => _chunk = value;}
-    public int Layer {get => _layer; set => _layer = value;}
-    public Vector2Int WrappedIndexBlock {get => _block; set => _block = value;}
-    public int UnwrappedIndexBlock => _block.x + _block.y * GRID_SIZE;
-
-    // Serialization getters
-    public string ChunkReference => nameof(_chunk);
-    public string LayerReference => nameof(_layer);
-    public string BlockReference => nameof(_block);
-}
-
-// Tracks the piece's current position
-[SerializeField] protected Coordinates _currentCoordinates = new Coordinates();
-
-// Tracks what position is being checked
-protected Coordinates _checkingCoordinates = new Coordinates();
-                </code>
-
-            <h3>Position queries</h3>
-                <p><strong>Pieces</strong> are always children of blocks from <strong>the grid</strong> in the hierarchy, they utilize the data from their previously mentioned instances of the <code>Coordinates</code> class to search for blocks in the hierarchy.</p>
-                <code>
-// Block parent is based on the piece's current coordinates
-public bool TranslatePiecePosition()
-{
-    Transform queriedPosition = FindBlock(_currentCoordinates.Chunk, _currentCoordinates.Layer, _currentCoordinates.UnwrappedIndexBlock);
-    if(queriedPosition == null) return false;
-
-    transform.parent = queriedPosition;
-    transform.localPosition = new Vector3(0, 1, 0);
-
-    // Resets the pathfinder
-    _checkingCoordinates = _currentCoordinates.Clone();
-    return true;
-}
-
-// Queries
-public Transform FindChunk(Vector2Int concatenatingPositionQuery)
-{
-    var queriedChunk = transform.root
-        .GetComponentsInChildren&lt;ChunkBehaviour&gt;()
-        .FirstOrDefault(chunk => chunk != null && chunk.ConcatenatingPosition == concatenatingPositionQuery);
-
-    return queriedChunk != null ? queriedChunk.transform : null;
-}
-
-public Transform FindLayer(Transform chunk, int heightQuery)
-{
-    var queriedLayer = chunk
-        .GetComponentsInChildren&lt;LayerBehaviour&gt;()
-        .FirstOrDefault(layer => layer != null && layer.Height == heightQuery);
-
-    return queriedLayer != null ? queriedLayer.transform : null;
-}
-
-public Transform FindBlock(Transform layer, int unwrappedIndexQuery)
-{
-    Transform queriedBlock = layer.GetChild(unwrappedIndexQuery);
-    return queriedBlock.gameObject.activeInHierarchy ? queriedBlock : null;
-}
-
-public Transform FindBlock(Vector2Int concatenatingPositionQuery, int heightQuery, int unwrappedIndexQuery)
-{
-    Transform queriedChunk = FindChunk(concatenatingPositionQuery);
-    if(queriedChunk == null) return null;
-
-    Transform queriedLayer = FindLayer(queriedChunk, heightQuery);
-    if(queriedLayer == null) return null;
-
-    Transform queriedBlock = FindBlock(queriedLayer, unwrappedIndexQuery);
-    if(queriedBlock == null) return null;
-
-    return queriedBlock;
-}
-
-public Transform FindBlock(Coordinates blockCoordinates)
-{
-    Transform queriedChunk = FindChunk(blockCoordinates.Chunk);
-    if(queriedChunk == null) return null;
-
-    Transform queriedLayer = FindLayer(queriedChunk, blockCoordinates.Layer);
-    if(queriedLayer == null) return null;
-
-    Transform queriedBlock = FindBlock(queriedLayer, blockCoordinates.UnwrappedIndexBlock);
-    if(queriedBlock == null) return null;
-
-    return queriedBlock;
-}
-                </code>
-
-            <h3>Piece movement calculations</h3>
-                <p>An abstract function meant to be overriden by sub-classes to define movement patterns.</p>
-                <code>
-// The piece's movement possibilities
-public abstract void CalculatePieceMoves();
-                </code>
-
-        <h2><img src="../multimedia/cs_logo.png" alt="C# logo">PieceMovementEditor</h2>
-            <p>A simple <code>Editor</code> script to manipulate the <strong>piece's</strong> position through the <code>PieceMovement</code> script's inspector window.</p>
-            <code>
-using UnityEngine;
-using UnityEditor;
-using static PieceMovement;
-using static ChunkBehaviour;
-
-[CustomEditor(typeof(PieceMovement), true)]
-public class PieceMovementEditor : Editor
-{
-    public override void OnInspectorGUI()
-    {
-        PieceMovement pieceMovement = target as PieceMovement;
-        Coordinates serializationReference = new Coordinates();
-
-
-        serializedObject.Update();
-
-        SerializedProperty
-            currentPosition = serializedObject.FindProperty(pieceMovement.CurrentPositionReference);
-
-        SerializedProperty
-            currentChunk = currentPosition.FindPropertyRelative(serializationReference.ChunkReference),
-            currentLayer = currentPosition.FindPropertyRelative(serializationReference.LayerReference),
-            currentBlock = currentPosition.FindPropertyRelative(serializationReference.BlockReference);
-
-
-        EditorGUILayout.BeginVertical("box");
-        EditorGUILayout.LabelField("Chunk");
-        EditorGUI.indentLevel++;
-        EditorGUILayout.PropertyField(currentChunk.FindPropertyRelative("x"), new GUIContent("X"));
-        EditorGUILayout.PropertyField(currentChunk.FindPropertyRelative("y"), new GUIContent("Z"));
-        EditorGUI.indentLevel--;
-        EditorGUILayout.EndVertical();
-        EditorGUILayout.Space();
-
-        EditorGUILayout.BeginVertical("box");
-        EditorGUILayout.PropertyField(currentLayer, new GUIContent("Layer"));
-        EditorGUILayout.EndVertical();
-        EditorGUILayout.Space();
-
-        EditorGUILayout.BeginVertical("box");
-        EditorGUILayout.LabelField("Block");
-        EditorGUI.indentLevel++;
-
-        // Enforces correct block coordinates
-        SerializedProperty blockX = currentBlock.FindPropertyRelative("x");
-        SerializedProperty blockZ = currentBlock.FindPropertyRelative("y");
-
-        int newXCoordinate = EditorGUILayout.IntField("X", blockX.intValue);
-        blockX.intValue = (newXCoordinate % GRID_SIZE + GRID_SIZE) % GRID_SIZE;
-
-        int newZCoordinate = EditorGUILayout.IntField("Z", blockZ.intValue);
-        blockZ.intValue = (newZCoordinate % GRID_SIZE + GRID_SIZE) % GRID_SIZE;
-
-        EditorGUI.indentLevel--;
-        EditorGUILayout.EndVertical();
-
-
-        serializedObject.ApplyModifiedProperties();
-        if(!pieceMovement.TranslatePiecePosition()) EditorGUILayout.HelpBox("This position doesn't exist!", MessageType.Warning);
-    }
-}
-            </code>
-
-        <h2><img src="../multimedia/cs_logo.png" alt="C# logo">PlayerMovement</h2>
-            <p>A sub-class of <code>PieceMovement</code>, defines the player's movement patterns.</p>
-
-            <h3>Player patterns</h3>
-                <p>The player has multiple movement patterns, however, they can only use choose at any given moment:</p>
-                <ul>
-                    <li>The king's pattern.</li>
-                    <li>The rook's pattern.</li>
-                    <li>The bishop's pattern.</li>
-                    <li>The knight's pattern.</li>
-                </ul>
-                <code>
-// The player's movement patterns
-private enum PlayerPatterns
-{
-    KING,
-    ROOK,
-    BISHOP,
-    KNIGHT
-}
-private PlayerPatterns _currentPattern = PlayerPatterns.KNIGHT;
-                </code>
-                <code>
-public override void CalculatePieceMoves()
-{
-    // Resets the clickable blocks
-    foreach(CheckedBlockBehaviour checkedBlock in _checkedBlocks)
-    {
-        Destroy(checkedBlock);
-    }
-    _checkedBlocks = new List&lt;CheckedBlockBehaviour&gt;();
-
-    // Tracks the extended pathfinding of the rook and the bishop's moves
-    bool isExtendedPathInterrupted = false;
-    Vector3Int extendedPathPosition = new Vector3Int();
-
-    switch(_currentPattern)
-    {
-        // Finds all adjacent blocks, including height and diagonally from the player's current coordinates (allows branching decision)
-        case PlayerPatterns.KING:
-        {
-            for(int height = -1; height &lt;= 1; height++)
-            {
-                _checkingCoordinates.Layer = _currentCoordinates.Layer + height;
-                for(int horizon = -1; horizon &lt;= 1; horizon++)
-                {
-                    int nextHorizonBlock = _currentCoordinates.WrappedIndexBlock.x + horizon;
-                    _checkingCoordinates.WrappedIndexBlock = new Vector2Int
-                    (
-                        (nextHorizonBlock + GRID_SIZE) % GRID_SIZE,
-                        _currentCoordinates.WrappedIndexBlock.y
-                    );
-                    _checkingCoordinates.Chunk = new Vector2Int
-                    (
-                        _currentCoordinates.Chunk.x + Mathf.FloorToInt((float)nextHorizonBlock / GRID_SIZE),
-                        _currentCoordinates.Chunk.y
-                    );
-
-                    for(int depth = -1; depth &lt;= 1; depth++)
-                    {
-                        int nextDepthBlock = _currentCoordinates.WrappedIndexBlock.y + depth;
-                        _checkingCoordinates.WrappedIndexBlock = new Vector2Int
-                        (
-                            _checkingCoordinates.WrappedIndexBlock.x,
-                            (nextDepthBlock + GRID_SIZE) % GRID_SIZE
-                        );
-                        _checkingCoordinates.Chunk = new Vector2Int
-                        (
-                            _checkingCoordinates.Chunk.x,
-                            _currentCoordinates.Chunk.y + Mathf.FloorToInt((float)nextDepthBlock / GRID_SIZE)
-                        );
-
-                        Transform digPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer + 1, _checkingCoordinates.UnwrappedIndexBlock);
-                        if(digPosition != null) continue;
-                        Transform queriedPosition = FindBlock(_checkingCoordinates.Clone());
-                        if(queriedPosition == null) continue;
-
-                        CheckedBlockBehaviour checkedBlock = queriedPosition.gameObject.AddComponent&lt;CheckedBlockBehaviour&gt;();
-                        checkedBlock.InitializeBlock(ChangePlayerCurrentPosition, _checkingCoordinates.Clone());
-                        _checkedBlocks.Add(checkedBlock);
-                    }
-                }
-            }
-
-            // The player shouldn't be able to stay still
-            Destroy(transform.parent.GetComponent&lt;CheckedBlockBehaviour&gt;());
-            break;
-        }
-
-        // Finds a maximum of GRID_SIZE blocks towards all sides from the player's current position (follows the highest block in branch situations)
-        case PlayerPatterns.ROOK:
-        {
-            for(int horizon = -1; horizon &lt;= 1; horizon += 2)
-            {
-                isExtendedPathInterrupted = false;
-                extendedPathPosition = new Vector3Int(horizon, _currentCoordinates.Layer, 0);
-                while(!isExtendedPathInterrupted && extendedPathPosition.x % (GRID_SIZE + 1) != 0)
-                {
-                    isExtendedPathInterrupted = true;
-
-                    int nextHorizonBlock = _currentCoordinates.WrappedIndexBlock.x + extendedPathPosition.x;
-                    _checkingCoordinates.WrappedIndexBlock = new Vector2Int
-                    (
-                        (nextHorizonBlock + GRID_SIZE) % GRID_SIZE,
-                        _currentCoordinates.WrappedIndexBlock.y
-                    );
-                    _checkingCoordinates.Chunk = new Vector2Int
-                    (
-                        _currentCoordinates.Chunk.x + Mathf.FloorToInt((float)nextHorizonBlock / GRID_SIZE),
-                        _currentCoordinates.Chunk.y
-                    );
-
-                    for(int height = 1; height &gt;= -1; height--)
-                    {
-                        _checkingCoordinates.Layer = extendedPathPosition.y + height;
-
-                        Transform digPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer + 1, _checkingCoordinates.UnwrappedIndexBlock);
-                        if(digPosition != null) continue;
-                        Transform queriedPosition = FindBlock(_checkingCoordinates.Clone());
-                        if(queriedPosition == null) continue;
-
-                        CheckedBlockBehaviour checkedBlock = queriedPosition.gameObject.AddComponent&lt;CheckedBlockBehaviour&gt;();
-                        checkedBlock.InitializeBlock(ChangePlayerCurrentPosition, _checkingCoordinates.Clone());
-                        _checkedBlocks.Add(checkedBlock);
-                        extendedPathPosition.y += height;
-                        isExtendedPathInterrupted = false;
-                        break;
-                    }
-                    extendedPathPosition.x += horizon * 1;
-                }
-            }
-
-            for(int depth = -1; depth &lt;= 1; depth += 2)
-            {
-                isExtendedPathInterrupted = false;
-                extendedPathPosition = new Vector3Int(0, _currentCoordinates.Layer, depth);
-                while(!isExtendedPathInterrupted && extendedPathPosition.z % (GRID_SIZE + 1) != 0)
-                {
-                    isExtendedPathInterrupted = true;
-
-                    int nextDepthBlock = _currentCoordinates.WrappedIndexBlock.y + extendedPathPosition.z;
-                    _checkingCoordinates.WrappedIndexBlock = new Vector2Int
-                    (
-                        _currentCoordinates.WrappedIndexBlock.x,
-                        (nextDepthBlock + GRID_SIZE) % GRID_SIZE
-                    );
-                    _checkingCoordinates.Chunk = new Vector2Int
-                    (
-                        _currentCoordinates.Chunk.x,
-                        _currentCoordinates.Chunk.y + Mathf.FloorToInt((float)nextDepthBlock / GRID_SIZE)
-                    );
-
-                    for(int height = 1; height &gt;= -1; height--)
-                    {
-                        _checkingCoordinates.Layer = extendedPathPosition.y + height;
-
-                        Transform digPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer + 1, _checkingCoordinates.UnwrappedIndexBlock);
-                        if(digPosition != null) continue;
-                        Transform queriedPosition = FindBlock(_checkingCoordinates.Clone());
-                        if(queriedPosition == null) continue;
-
-                        CheckedBlockBehaviour checkedBlock = queriedPosition.gameObject.AddComponent&lt;CheckedBlockBehaviour&gt;();
-                        checkedBlock.InitializeBlock(ChangePlayerCurrentPosition, _checkingCoordinates.Clone());
-                        _checkedBlocks.Add(checkedBlock);
-                        extendedPathPosition.y += height;
-                        isExtendedPathInterrupted = false;
-                        break;
-                    }
-                    extendedPathPosition.z += depth * 1;
-                }
-            }
-            break;
-        }
-
-        // Finds a maximum of GRID_SIZE blocks towards all corners from the player's current position (follows the highest block in branch situations)
-        case PlayerPatterns.BISHOP:
-        {
-            for(int horizon = -1; horizon &lt;= 1; horizon += 2)
-            {
-                for(int depth = -1; depth &lt;= 1; depth += 2)
-                {
-                    isExtendedPathInterrupted = false;
-                    extendedPathPosition = new Vector3Int(horizon, _currentCoordinates.Layer, depth);
-                    while(!isExtendedPathInterrupted && extendedPathPosition.z % (GRID_SIZE + 1) != 0)
-                    {
-                        isExtendedPathInterrupted = true;
-
-                        int
-                            nextHorizonBlock = (_currentCoordinates.WrappedIndexBlock.x + extendedPathPosition.x),
-                            nextDepthBlock = (_currentCoordinates.WrappedIndexBlock.y + extendedPathPosition.z);
-                        _checkingCoordinates.WrappedIndexBlock = new Vector2Int
-                        (
-                            (nextHorizonBlock + GRID_SIZE) % GRID_SIZE,
-                            (nextDepthBlock + GRID_SIZE) % GRID_SIZE
-                        );
-                        _checkingCoordinates.Chunk = new Vector2Int
-                        (
-                            _currentCoordinates.Chunk.x + Mathf.FloorToInt((float)nextHorizonBlock / GRID_SIZE),
-                            _currentCoordinates.Chunk.y + Mathf.FloorToInt((float)nextDepthBlock / GRID_SIZE)
-                        );
-
-                        for(int height = 1; height &gt;= -1; height--)
-                        {
-                            _checkingCoordinates.Layer = extendedPathPosition.y + height;
-
-                            Transform digPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer + 1, _checkingCoordinates.UnwrappedIndexBlock);
-                            if(digPosition != null) continue;
-                            Transform queriedPosition = FindBlock(_checkingCoordinates.Clone());
-                            if(queriedPosition == null) continue;
-
-                            CheckedBlockBehaviour checkedBlock = queriedPosition.gameObject.AddComponent&lt;CheckedBlockBehaviour&gt;();
-                            checkedBlock.InitializeBlock(ChangePlayerCurrentPosition, _checkingCoordinates.Clone());
-                            _checkedBlocks.Add(checkedBlock);
-                            extendedPathPosition.y += height;
-                            isExtendedPathInterrupted = false;
-                            break;
-                        }
-                        extendedPathPosition.x += horizon * 1;
-                        extendedPathPosition.z += depth * 1;
-                    }
-                }
-            }
-            break;
-        }
-
-        // Finds blocks in an L shape just like regular chess, but it also allows to make jumps up to 3 layers of height (allows going through blocks)
-        case PlayerPatterns.KNIGHT:
-        {
-            for(int height = -3; height &lt;= 3; height++)
-            {
-                _checkingCoordinates.Layer = _currentCoordinates.Layer + height;
-                for(int horizon = -1; horizon &lt;= 1; horizon += 2)
-                {
-                    for(int depth = -1; depth &lt;= 1; depth += 2)
-                    {
-                        int
-                            nextHorizonBlock = _currentCoordinates.WrappedIndexBlock.x + horizon,
-                            nextDepthBlock = _currentCoordinates.WrappedIndexBlock.y + depth;
-                        _checkingCoordinates.WrappedIndexBlock = new Vector2Int
-                        (
-                            (nextHorizonBlock + GRID_SIZE) % GRID_SIZE,
-                            (nextDepthBlock + GRID_SIZE) % GRID_SIZE
-                        );
-                        _checkingCoordinates.Chunk = new Vector2Int
-                        (
-                            _currentCoordinates.Chunk.x + Mathf.FloorToInt((float)nextHorizonBlock / GRID_SIZE),
-                            _currentCoordinates.Chunk.y + Mathf.FloorToInt((float)nextDepthBlock / GRID_SIZE)
-                        );
-                        int
-                            horizonLShapeRelativeBlockUnwrappedIndex = (GRID_SIZE + (_checkingCoordinates.WrappedIndexBlock.x + horizon)) % GRID_SIZE + _checkingCoordinates.WrappedIndexBlock.y * GRID_SIZE,
-                            depthLShapeRelativeBlockUnwrappedIndex = _checkingCoordinates.WrappedIndexBlock.x + (GRID_SIZE + (_checkingCoordinates.WrappedIndexBlock.y + depth)) % GRID_SIZE * GRID_SIZE;
-
-                        Transform digHorizonPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer + 1, horizonLShapeRelativeBlockUnwrappedIndex);
-                        Transform queriedHorizonPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer, horizonLShapeRelativeBlockUnwrappedIndex);
-                        if(digHorizonPosition == null && queriedHorizonPosition != null)
-                        {
-                            CheckedBlockBehaviour checkedHorizonBlock = queriedHorizonPosition.gameObject.AddComponent&lt;CheckedBlockBehaviour&gt;();
-                            checkedHorizonBlock.InitializeBlock
-                            (
-                                ChangePlayerCurrentPosition,
-                                new Coordinates
-                                (
-                                    _checkingCoordinates.Chunk,
-                                    _checkingCoordinates.Layer,
-                                    horizonLShapeRelativeBlockUnwrappedIndex
-                                )
-                            );
-                            _checkedBlocks.Add(checkedHorizonBlock);
-                        }
-                        
-                        Transform digDepthPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer + 1, depthLShapeRelativeBlockUnwrappedIndex);
-                        Transform queriedDepthPosition = FindBlock(_checkingCoordinates.Chunk, _checkingCoordinates.Layer, depthLShapeRelativeBlockUnwrappedIndex);
-                        if(digDepthPosition == null && queriedDepthPosition != null)
-                        {
-                            CheckedBlockBehaviour checkedDepthBlock = queriedDepthPosition.gameObject.AddComponent&lt;CheckedBlockBehaviour&gt;();
-                            checkedDepthBlock.InitializeBlock
-                            (
-                                ChangePlayerCurrentPosition,
-                                new Coordinates
-                                (
-                                    _checkingCoordinates.Chunk,
-                                    _checkingCoordinates.Layer,
-                                    depthLShapeRelativeBlockUnwrappedIndex
-                                )
-                            );
-                            _checkedBlocks.Add(checkedDepthBlock);
-                        }
-                    }
-                }
-            }
-            break;
-        }
-    }
-}
-                </code>
-
-            <h3><img src="../multimedia/cs_logo.png" alt="C# logo">CheckedBlockBehaviour</h3>
-                <p>In the previous code snippet there are a lot of instances of a component called <code>CheckedBlockBehaviour</code>, this script is exclusively meant for the player to be able to click any block checked in any of their movement patterns.</p>
-
-                <h4><img src="../multimedia/cs_logo.png" alt="C# logo">PlayerMovement code snippets</h4>
-                    <p><code>PlayerMovement</code> keeps track of the checked blocks in order to remove their scripts after changing the player's position.</p>
-                    <code>
-public void ChangePlayerCurrentPosition(Coordinates blockCoordinates)
-{
-    _currentCoordinates = blockCoordinates;
-    TranslatePiecePosition();
-    CalculatePieceMoves();
-}
-                    </code>
-                    <code>
-// Tracks which blocks have been made clickable to reset later
-private List&lt;CheckedBlockBehaviour&gt; _checkedBlocks = new List<CheckedBlockBehaviour>();
-
-public override void CalculatePieceMoves()
-{
-    // Resets the clickable blocks
-    foreach(CheckedBlockBehaviour checkedBlock in _checkedBlocks)
-    {
-        Destroy(checkedBlock);
-    }
-    _checkedBlocks = new List&lt;CheckedBlockBehaviour&gt;();
-
-    ...
-                    </code>
-
-                <h4><img src="../multimedia/cs_logo.png" alt="C# logo">CheckedBlockBehaviour code snippets</h4>
-                    <p><code>PlayerMovement</code> initializes the <code>CheckedBlockBehaviour</code> script with its <code>ChangePlayerCurrentPosition</code> method and the <code>Coordinates</code> it's checking.</p>
-                    <p><code>_onBlockClicked</code> holds the reference to the <code>ChangePlayerCurrentPosition</code> method to be executed when the checked block is clicked by the player. <code>AntiClickFreeze()</code> is a wrapper method that prevents <img src="../multimedia/unity_logo.png" alt="Unity logo"><strong>Unity</strong> from freezing, since unexpected behaviour can happen when invoking a method and deleting said invoker at the same exact frame.</p>
-                    <code>
-using System.Collections;
-using UnityEngine;
-using static PieceMovement;
-
-// Meant for the player's piece to become the child of the holder of this script
-public class CheckedBlockBehaviour : MonoBehaviour
-{
-    private System.Action&lt;Coordinates&gt; _onBlockClicked;
-    private Coordinates _blockCoordinates;
-
-    private void OnMouseDown()
-    {
-        StartCoroutine(AntiClickFreeze());
-    }
-
-    private IEnumerator AntiClickFreeze()
-    {
-        yield return null;
-        _onBlockClicked.Invoke(_blockCoordinates);
-    }
-
-    public void InitializeBlock(System.Action&lt;Coordinates&gt; clickEvent, Coordinates blockCoordinates)
-    {
-        _onBlockClicked = clickEvent;
-        _blockCoordinates = blockCoordinates;
-    }
-}
-                    </code>
-        
-        <h2><img src="../multimedia/cs_logo.png" alt="C# logo">PlayerMovementEditor</h2>
-            <p>A sub-class of <code>PieceMovementEditor</code>, it simply adds a field to select the player's current movement pattern in its inspector window.</p>
-            <code>
-using UnityEditor;
-
-[CustomEditor(typeof(PlayerMovement))]
-public class PlayerMovementEditor : PieceMovementEditor
-{
-    public override void OnInspectorGUI()
-    {
-        PlayerMovement playerMovement = target as PlayerMovement;
-
-        serializedObject.Update();
-
-        SerializedProperty
-            currentPattern = serializedObject.FindProperty(playerMovement.CurrentPatternReference);
-
-        EditorGUILayout.BeginVertical("box");
-        EditorGUILayout.PropertyField(currentPattern);
-        EditorGUILayout.EndVertical();
-
-        EditorGUILayout.Space();
-
-        serializedObject.ApplyModifiedProperties();
-
-        base.OnInspectorGUI();
-    }
-}
-            </code>
-        
-        <h2><img src="../multimedia/cs_logo.png" alt="C# logo">CameraController</h2>
-            <p>Targets a <strong>piece</strong> to focus the camera on and allows to revolve the camera around the focused <strong>piece</strong>.</p>
-            <code>
-using UnityEngine;
-
-public class CameraController : MonoBehaviour
-{
-    // Tracks the focused piece
-    [SerializeField] private Transform _pieceTarget;
-
-    // Camera properties
-    private float _distance = -10f;
-    private float _speed = 5f;
-    private Vector2 _orbitAngles = new Vector2(33f, -33f);
-
-    private void Update()
-    {
-        // Right click and drag to rotate around the focused piece
-        if(Input.GetMouseButton(1))
-        {
-            _orbitAngles.x += Input.GetAxis("Mouse Y") * -_speed;
-            _orbitAngles.y += Input.GetAxis("Mouse X") * _speed;
-        }
-        Quaternion newRotation = Quaternion.Euler(_orbitAngles.x, _orbitAngles.y, 0f);
-        Vector3 offset = newRotation * new Vector3(0f, 0f, _distance);
-        transform.position = _pieceTarget.position + offset;
-        transform.rotation = newRotation;
-
-        // Mouse wheel to zoom in and out
-        _distance += Input.GetAxis("Mouse ScrollWheel") * _speed * 1.5f;
-        _distance = Mathf.Clamp(_distance, -20, -10);
-    }
-}
-            </code>
-
-        <h2><img src="../multimedia/youtube_logo.png" alt="Youtube logo">Player movement demonstration</h2>
-            <iframe src="https://www.youtube.com/embed/oH6vZHuyXOE?si=eBrsjAzUCUXa6U6f" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-</body>
+                <h3>Global variables</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>_currentCoordinates</td>
+                                <td>Coordinates</td>
+                                <td>protected [SerializeField]</td>
+                                <td>Tracks the current coordinates of the piece.</td>
+                            </tr>
+                            <tr>
+                                <td>_preMatchCoordinates</td>
+                                <td>Coordinates</td>
+                                <td>protected</td>
+                                <td>Stores the piece's coordinates before a match starts.</td>
+                            </tr>
+                            <tr>
+                                <td>_checkingCoordinates</td>
+                                <td>Coordinates</td>
+                                <td>protected</td>
+                                <td>Tracks which coordinates are currently being considered during movement calculations.</td>
+                            </tr>
+                            <tr>
+                                <td>_virtualPieceManager</td>
+                                <td>VirtualSpaceManager</td>
+                                <td>protected</td>
+                                <td>Reference to the virtual space manager controlling the piece.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                <h3>Methods</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Parameters</th>
+                                <th>Return Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>TranslatePiecePosition</td>
+                                <td>bool isInstantaneous = false</td>
+                                <td>bool</td>
+                                <td>public virtual</td>
+                                <td>Moves the piece to its current coordinates, optionally animating the movement.</td>
+                            </tr>
+                            <tr>
+                                <td>PieceMovementAnimation</td>
+                                <td>—</td>
+                                <td>IEnumerator</td>
+                                <td>protected</td>
+                                <td>Coroutine that animates the piece moving to its target position.</td>
+                            </tr>
+                            <tr>
+                                <td>FindChunk</td>
+                                <td>Vector2Int concatenatingPositionQuery</td>
+                                <td>Transform</td>
+                                <td>public</td>
+                                <td>Returns the transform of a chunk by its concatenating position.</td>
+                            </tr>
+                            <tr>
+                                <td>FindLayer</td>
+                                <td>Transform chunk, int heightQuery</td>
+                                <td>Transform</td>
+                                <td>public</td>
+                                <td>Returns the transform of a layer in a given chunk by height.</td>
+                            </tr>
+                            <tr>
+                                <td>FindBlock</td>
+                                <td>Transform layer, int unwrappedIndexQuery, bool isBlockActiveStateRelevant = true</td>
+                                <td>Transform</td>
+                                <td>public</td>
+                                <td>Returns the transform of a block within a layer, optionally considering its active state.</td>
+                            </tr>
+                            <tr>
+                                <td>FindBlock</td>
+                                <td>Vector2Int concatenatingPositionQuery, int heightQuery, int unwrappedIndexQuery, bool isBlockActiveStateRelevant = true</td>
+                                <td>Transform</td>
+                                <td>public</td>
+                                <td>Returns the transform of a block based on chunk, layer, and block index.</td>
+                            </tr>
+                            <tr>
+                                <td>FindBlock</td>
+                                <td>Coordinates blockCoordinates, bool isBlockActiveStateRelevant = true</td>
+                                <td>Transform</td>
+                                <td>public</td>
+                                <td>Returns the transform of a block using a Coordinates object.</td>
+                            </tr>
+                            <tr>
+                                <td>CalculatePieceMoves</td>
+                                <td>—</td>
+                                <td>void</td>
+                                <td>public abstract</td>
+                                <td>Calculates valid movement positions for the piece. Must be implemented by subclasses.</td>
+                            </tr>
+                            <tr>
+                                <td>TakePiece</td>
+                                <td>PieceMovement piece</td>
+                                <td>void</td>
+                                <td>public</td>
+                                <td>Deactivates a piece if it occupies the same coordinates as this piece.</td>
+                            </tr>
+                            <tr>
+                                <td>ResetPiece</td>
+                                <td>—</td>
+                                <td>void</td>
+                                <td>public abstract</td>
+                                <td>Resets the piece to its original state after a match. Must be implemented by subclasses.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                <h3>Classes and Enums</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Kind</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Coordinates</td>
+                                <td>Class</td>
+                                <td>public [Serializable]</td>
+                                <td>Represents a chunk, layer, and block position for a piece and provides helper methods for world position conversion.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+            <h2><img src="../multimedia/cs_logo.png" alt="C# logo">PieceMovementEditor</h2>
+
+                <h3>Methods</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Parameters</th>
+                                <th>Return Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>OnInspectorGUI</td>
+                                <td>—</td>
+                                <td>void</td>
+                                <td>public override</td>
+                                <td>Overrides the default Inspector GUI to provide coordinate editing for chunk, layer, and block with clamping and validation.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+            <nav class="flex column nowrap">
+                <a href="pieces/player.html">The player</a>
+                <a href="pieces/enemies.html">The enemies</a>
+            </nav>
+    </body>
 </html>

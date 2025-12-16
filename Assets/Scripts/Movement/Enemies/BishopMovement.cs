@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-using static GridManager;
+using static VirtualSpaceManager;
 
 public class BishopMovement : EnemyMovement
 {

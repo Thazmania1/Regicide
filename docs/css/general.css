@@ -96,6 +96,98 @@ code strong
     background-color: rgb(255, 255, 0);
 }
 
+/* Table styling */
+table
+{
+    width: 100%;
+    border-collapse: collapse;
+    background-color: var(--rgb50);
+    color: var(--rgb250);
+
+    font-size: clamp(0.95rem, 2.25vw, 1.15rem);
+}
+
+/* Table styles */
+table
+{
+    display: block;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+
+    width: min-content;
+}
+caption
+{
+    caption-side: bottom;
+    padding: 0.75em 0;
+    color: var(--rgb175);
+    font-style: italic;
+    text-align: center;
+}
+thead th
+{
+    background-color: var(--rgb75);
+    color: var(--rgb250);
+
+    font-weight: bold;
+    text-align: center;
+
+    padding: 0.75em;
+    border-bottom: 2px solid var(--rgb200);
+}
+tbody td
+{
+    padding: 0.65em 0.75em;
+    border-bottom: 1px solid var(--rgb100);
+    vertical-align: top;
+}
+tbody tr:nth-child(even)
+{
+    background-color: var(--rgb25);
+}
+tbody tr:hover
+{
+    background-color: var(--rgb75);
+}
+tfoot td
+{
+    background-color: var(--rgb75);
+    font-weight: bold;
+    padding: 0.75em;
+    border-top: 2px solid var(--rgb200);
+}
+table a
+{
+    color: var(--link);
+    text-decoration: underline;
+}
+table code
+{
+    display: inline;
+    padding: 0 0.25em;
+    background-color: var(--rgb75);
+    color: rgb(255, 255, 0);
+}
+thead th,
+tbody td,
+tfoot td
+{
+    position: relative;
+}
+thead th:not(:last-child),
+tbody td:not(:last-child),
+tfoot td:not(:last-child)
+{
+    box-shadow: inset -1px 0 0 0 rgba(255, 255, 255, 0.08);
+}
+tbody tr:not(:last-child) td
+{
+    box-shadow:
+        inset -1px 0 0 0 rgba(255, 255, 255, 0.08),
+        inset 0 -1px 0 0 rgba(255, 255, 255, 0.06);
+}
+
 img
 {
     display: block;

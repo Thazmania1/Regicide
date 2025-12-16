@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <link rel="icon" href="../../favicon.ico">
+        <title>The enemies</title>
+
+        <link rel="stylesheet" href="../../css/general.css">
+    </head>
+    <body>
+        <a id="previous-page" href="../pieces.html"><img src="../../multimedia/back_icon.png" alt="Back icon"></a>
+        <h1>The enemies</h1>
+
+            <h2><img src="../../multimedia/cs_logo.png" alt="C# logo">EnemyMovement</h2>
+
+                <h3>Global variables</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>_calculatedMoves</td>
+                                <td>List&lt;Coordinates&gt;</td>
+                                <td>protected</td>
+                                <td>Stores all valid movement coordinates calculated for the enemy piece.</td>
+                            </tr>
+                            <tr>
+                                <td>_lastCoordinates</td>
+                                <td>Coordinates</td>
+                                <td>protected</td>
+                                <td>Tracks the previous coordinates used by certain movement patterns.</td>
+                            </tr>
+                            <tr>
+                                <td>_isExtendedPathInterrupted</td>
+                                <td>bool</td>
+                                <td>protected</td>
+                                <td>Indicates whether a multi-tile movement path has been interrupted.</td>
+                            </tr>
+                            <tr>
+                                <td>_extendedPathPosition</td>
+                                <td>Vector3Int</td>
+                                <td>protected</td>
+                                <td>Stores the world position used when calculating extended movement paths.</td>
+                            </tr>
+                            <tr>
+                                <td>_isBlockedByPiece</td>
+                                <td>bool</td>
+                                <td>protected</td>
+                                <td>Indicates whether a movement path is blocked by another piece.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                <h3>Methods</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Parameters</th>
+                                <th>Return Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Start</td>
+                                <td>—</td>
+                                <td>void</td>
+                                <td>private</td>
+                                <td>Initializes references and stores the starting coordinates of the enemy piece.</td>
+                            </tr>
+                            <tr>
+                                <td>PlayMove</td>
+                                <td>—</td>
+                                <td>void</td>
+                                <td>protected</td>
+                                <td>Selects and executes the move that minimizes distance to the player piece.</td>
+                            </tr>
+                            <tr>
+                                <td>ResetPiece</td>
+                                <td>—</td>
+                                <td>void</td>
+                                <td>public override</td>
+                                <td>Restores the enemy piece to its pre-match position and re-enables it.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+            <h2><img src="../../multimedia/cs_logo.png" alt="C# logo">PawnMovement</h2>
+
+                <h3>Global variables</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>_lockedDirection</td>
+                                <td>Vector2Int</td>
+                                <td>private</td>
+                                <td>Stores the movement direction the pawn is locked into until its path is interrupted.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                <h3>Methods</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Parameters</th>
+                                <th>Return Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>CalculatePieceMoves</td>
+                                <td>—</td>
+                                <td>void</td>
+                                <td>public override</td>
+                                <td>Calculates all valid pawn moves based on current direction, height, and capture rules, then executes the optimal move.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+            <h2><img src="../../multimedia/cs_logo.png" alt="C# logo">RookMovement</h2>
+
+                <h3>Global variables</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>_isExtendedPathInterrupted</td>
+                                <td>bool</td>
+                                <td>protected</td>
+                                <td>Indicates whether the rook’s extended movement path has been interrupted.</td>
+                            </tr>
+                            <tr>
+                                <td>_extendedPathPosition</td>
+                                <td>Vector3Int</td>
+                                <td>protected</td>
+                                <td>Tracks the current relative position along the extended rook movement path.</td>
+                            </tr>
+                            <tr>
+                                <td>_isBlockedByPiece</td>
+                                <td>bool</td>
+                                <td>protected</td>
+                                <td>Marks whether the path is blocked by a player piece, stopping further extension.</td>
+                            </tr>
+                            <tr>
+                                <td>_calculatedMoves</td>
+                                <td>List&lt;Coordinates&gt;</td>
+                                <td>protected</td>
+                                <td>Accumulates all valid movement coordinates calculated for the rook.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                <h3>Methods</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Parameters</th>
+                                <th>Return Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>CalculatePieceMoves</td>
+                                <td>—</td>
+                                <td>void</td>
+                                <td>public override</td>
+                                <td>Calculates all valid rook moves by extending in straight directions across chunks and layers, then executes the chosen move.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+            <h2><img src="../../multimedia/cs_logo.png" alt="C# logo">BishopMovement</h2>
+
+                <h3>Global variables</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>_calculatedMoves</td>
+                                <td>List&lt;Coordinates&gt;</td>
+                                <td>protected</td>
+                                <td>Stores all candidate diagonal moves calculated for the bishop.</td>
+                            </tr>
+                            <tr>
+                                <td>_lastCoordinates</td>
+                                <td>Coordinates</td>
+                                <td>protected</td>
+                                <td>Tracks the bishop’s previous coordinates to allow alternative path calculations.</td>
+                            </tr>
+                            <tr>
+                                <td>_isExtendedPathInterrupted</td>
+                                <td>bool</td>
+                                <td>protected</td>
+                                <td>Indicates whether the extended diagonal path calculation should stop.</td>
+                            </tr>
+                            <tr>
+                                <td>_extendedPathPosition</td>
+                                <td>Vector3Int</td>
+                                <td>protected</td>
+                                <td>Represents the current relative position while extending the bishop’s movement path.</td>
+                            </tr>
+                            <tr>
+                                <td>_isBlockedByPiece</td>
+                                <td>bool</td>
+                                <td>protected</td>
+                                <td>Marks whether a player piece blocks the path, terminating further extension.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                <h3>Methods</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Parameters</th>
+                                <th>Return Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>CalculatePieceMoves</td>
+                                <td>—</td>
+                                <td>void</td>
+                                <td>public override</td>
+                                <td>Calculates all valid diagonal bishop moves from the current and, if applicable, the previous position, then executes the optimal move.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+            <h2><img src="../../multimedia/cs_logo.png" alt="C# logo">KnightMovement</h2>
+
+                <h3>Global variables</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>_inactiveBlock</td>
+                                <td>GameObject</td>
+                                <td>private</td>
+                                <td>Tracks the inactive block currently occupied by the knight so it can be restored when the knight moves away.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                <h3>Methods</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Parameters</th>
+                                <th>Return Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>CalculatePieceMoves</td>
+                                <td>—</td>
+                                <td>void</td>
+                                <td>public override</td>
+                                <td>Calculates all valid knight L-shaped moves across available chunks and layers, ignoring block occupancy except for vertical obstruction, then executes the optimal move.</td>
+                            </tr>
+                            <tr>
+                                <td>TranslatePiecePosition</td>
+                                <td>bool isInstantaneous = false</td>
+                                <td>bool</td>
+                                <td>public override</td>
+                                <td>Moves the knight to the target block while enabling its inactive-block mechanic, activating invisible blocks temporarily and restoring them upon exit.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+    </body>
+</html>

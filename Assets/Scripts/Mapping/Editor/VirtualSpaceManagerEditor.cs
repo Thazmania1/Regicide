@@ -1,8 +1,8 @@
 using UnityEditor;
 using UnityEngine;
 
-[CustomEditor(typeof(GridManager))]
-public class GridManagerEditor : Editor
+[CustomEditor(typeof(VirtualSpaceManager))]
+public class VirtualSpaceManagerEditor : Editor
 {
     public override void OnInspectorGUI()
     {
@@ -11,8 +11,8 @@ public class GridManagerEditor : Editor
             base.OnInspectorGUI();
         EditorGUILayout.EndVertical();
 
-        GridManager gridManager = target as GridManager;
-        Transform gridManagerTransform = gridManager.transform;
+        VirtualSpaceManager virtualSpaceManager = target as VirtualSpaceManager;
+        Transform virtualSpaceManagerTransform = virtualSpaceManager.transform;
 
         serializedObject.Update();
 
@@ -21,7 +21,7 @@ public class GridManagerEditor : Editor
             {
                 GameObject newChunk = new GameObject();
                 Undo.RegisterCreatedObjectUndo(newChunk, "Generated new chunk");
-                newChunk.transform.parent = gridManagerTransform;
+                newChunk.transform.parent = virtualSpaceManagerTransform;
                 newChunk.isStatic = true;
                 newChunk.AddComponent<ChunkBehaviour>().TranslateConcatenatingPosition();
             }
@@ -30,8 +30,8 @@ public class GridManagerEditor : Editor
         serializedObject.ApplyModifiedProperties();
 
         // The grid layout must never be manipulated
-        gridManagerTransform.position = new Vector3(0, 0, 0);
-        gridManagerTransform.rotation = Quaternion.identity;
-        gridManagerTransform.localScale = new Vector3(1, 1, 1);
+        virtualSpaceManagerTransform.position = new Vector3(0, 0, 0);
+        virtualSpaceManagerTransform.rotation = Quaternion.identity;
+        virtualSpaceManagerTransform.localScale = new Vector3(1, 1, 1);
     }
 }

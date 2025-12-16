@@ -1,6 +1,6 @@
 using System.Collections;
 using UnityEngine;
-using static GridManager;
+using static VirtualSpaceManager;
 
 public class ChunkBehaviour : MonoBehaviour
 {

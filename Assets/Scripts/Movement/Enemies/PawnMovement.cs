@@ -1,5 +1,5 @@
 using UnityEngine;
-using static GridManager;
+using static VirtualSpaceManager;
 
 public class PawnMovement : EnemyMovement
 {

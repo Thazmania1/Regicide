@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+        <link rel="icon" href="../../favicon.ico">
+        <title>The player</title>
+
+        <link rel="stylesheet" href="../../css/general.css">
+    </head>
+    <body>
+        <a id="previous-page" href="../pieces.html"><img src="../../multimedia/back_icon.png" alt="Back icon"></a>
+        <h1>The player</h1>
+
+            <h2><img src="../../multimedia/cs_logo.png" alt="C# logo">PlayerMovement</h2>
+
+                <h3>Global variables</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>_currentPattern</td>
+                                <td>PlayerPattern</td>
+                                <td>private [SerializeField]</td>
+                                <td>Currently selected movement pattern for the player.</td>
+                            </tr>
+                            <tr>
+                                <td>_UIIconSelectionAnimation</td>
+                                <td>AnimationCurve</td>
+                                <td>private [SerializeField]</td>
+                                <td>Animation curve used to animate UI icon selection.</td>
+                            </tr>
+                            <tr>
+                                <td>_playerPatternsPanel</td>
+                                <td>GameObject</td>
+                                <td>private [SerializeField]</td>
+                                <td>UI panel containing player pattern selection icons.</td>
+                            </tr>
+                            <tr>
+                                <td>_checkedBlocks</td>
+                                <td>List&lt;CheckedBlockBehaviour&gt;</td>
+                                <td>private</td>
+                                <td>Tracks blocks currently marked as clickable.</td>
+                            </tr>
+                            <tr>
+                                <td>_checkedBlockPositions</td>
+                                <td>List&lt;Coordinates&gt;</td>
+                                <td>private readonly</td>
+                                <td>Stores candidate block positions before applying interaction scripts.</td>
+                            </tr>
+                            <tr>
+                                <td>_patternKeyMap</td>
+                                <td>Dictionary&lt;KeyCode, PlayerPattern&gt;</td>
+                                <td>private</td>
+                                <td>Maps keyboard input to player movement patterns.</td>
+                            </tr>
+                            <tr>
+                                <td>_iconMap</td>
+                                <td>Dictionary&lt;string, RectTransform&gt;</td>
+                                <td>private</td>
+                                <td>Maps pattern names to their corresponding UI icons.</td>
+                            </tr>
+                            <tr>
+                                <td>_lastSelectedIcon</td>
+                                <td>RectTransform</td>
+                                <td>private</td>
+                                <td>Tracks the previously selected UI icon.</td>
+                            </tr>
+                            <tr>
+                                <td>_runningAnimations</td>
+                                <td>Dictionary&lt;RectTransform, Coroutine&gt;</td>
+                                <td>private</td>
+                                <td>Keeps track of running icon animations to allow interruption.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                <h3>Methods</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Parameters</th>
+                                <th>Return Type</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>CalculatePieceMoves</td>
+                                <td>—</td>
+                                <td>void</td>
+                                <td>public override</td>
+                                <td>Calculates all valid movement positions based on the current player pattern.</td>
+                            </tr>
+                            <tr>
+                                <td>ResetClickableBlocks</td>
+                                <td>—</td>
+                                <td>void</td>
+                                <td>public</td>
+                                <td>Removes all clickable block behaviors and clears cached positions.</td>
+                            </tr>
+                            <tr>
+                                <td>PlayMove</td>
+                                <td>Coordinates blockCoordinates</td>
+                                <td>void</td>
+                                <td>protected</td>
+                                <td>Executes a player move, handles captures, and advances match state.</td>
+                            </tr>
+                            <tr>
+                                <td>UpdateIcons</td>
+                                <td>—</td>
+                                <td>void</td>
+                                <td>public</td>
+                                <td>Updates UI icons to reflect the currently selected movement pattern.</td>
+                            </tr>
+                            <tr>
+                                <td>ResetPiece</td>
+                                <td>—</td>
+                                <td>void</td>
+                                <td>public override</td>
+                                <td>Resets the player piece to its pre-match position.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+                <h3>Classes and Enums</h3>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Name</th>
+                                <th>Kind</th>
+                                <th>Modifiers</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>PlayerPattern</td>
+                                <td>Enum</td>
+                                <td>public</td>
+                                <td>Defines the available movement patterns the player can switch between.</td>
+                            </tr>
+                        </tbody>
+                    </table>
+
+        <h2><img src="../../multimedia/cs_logo.png" alt="C# logo">PlayerMovementEditor</h2>
+
+            <h3>Methods</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Parameters</th>
+                            <th>Return Type</th>
+                            <th>Modifiers</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>OnInspectorGUI</td>
+                            <td>—</td>
+                            <td>void</td>
+                            <td>public override</td>
+                            <td>Draws the custom Inspector UI for PlayerMovement, including pattern selection, UI animation references, and icon scaling logic.</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+        <h2><img src="../../multimedia/cs_logo.png" alt="C# logo">CameraController</h2>
+
+            <h3>Global variables</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Type</th>
+                            <th>Modifiers</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>_targetTransform</td>
+                            <td>Transform</td>
+                            <td>private [SerializeField]</td>
+                            <td>Current transform the camera orbits around.</td>
+                        </tr>
+                        <tr>
+                            <td>_invisibleFocus</td>
+                            <td>Transform</td>
+                            <td>private [SerializeField]</td>
+                            <td>Temporary transform used as an anchor during focus transition animations.</td>
+                        </tr>
+                        <tr>
+                            <td>_cameraFocusChangeAnimation</td>
+                            <td>AnimationCurve</td>
+                            <td>private [SerializeField]</td>
+                            <td>Animation curve controlling camera focus transitions.</td>
+                        </tr>
+                        <tr>
+                            <td>_distance</td>
+                            <td>float</td>
+                            <td>private</td>
+                            <td>Current distance between the camera and the target.</td>
+                        </tr>
+                        <tr>
+                            <td>_minimumDistance</td>
+                            <td>float</td>
+                            <td>private</td>
+                            <td>Minimum allowed camera distance.</td>
+                        </tr>
+                        <tr>
+                            <td>_maximumDistance</td>
+                            <td>float</td>
+                            <td>private</td>
+                            <td>Maximum allowed camera distance.</td>
+                        </tr>
+                        <tr>
+                            <td>_speed</td>
+                            <td>float</td>
+                            <td>private</td>
+                            <td>Rotation and zoom speed of the camera.</td>
+                        </tr>
+                        <tr>
+                            <td>_orbitAngles</td>
+                            <td>Vector2</td>
+                            <td>private</td>
+                            <td>Vertical and horizontal orbit angles around the target.</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+            <h3>Methods</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Parameters</th>
+                            <th>Return Type</th>
+                            <th>Modifiers</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Update</td>
+                            <td>—</td>
+                            <td>void</td>
+                            <td>private</td>
+                            <td>Handles camera rotation, orbiting, and zoom based on mouse input.</td>
+                        </tr>
+                        <tr>
+                            <td>ChangeCameraFocus</td>
+                            <td>Transform target, bool isInstantaneous, float newMinimumDistance, float newMaximumDistance</td>
+                            <td>IEnumerator</td>
+                            <td>public</td>
+                            <td>Smoothly transitions the camera focus to a target transform.</td>
+                        </tr>
+                        <tr>
+                            <td>ChangeCameraFocus</td>
+                            <td>Vector3 targetPosition, bool isInstantaneous, float newMinimumDistance, float newMaximumDistance</td>
+                            <td>IEnumerator</td>
+                            <td>public</td>
+                            <td>Smoothly transitions the camera focus to a world position.</td>
+                        </tr>
+                        <tr>
+                            <td>MatchBoardConversionFocus</td>
+                            <td>IReadOnlyList&lt;ChunkBehaviour&gt; matchBoard</td>
+                            <td>IEnumerator</td>
+                            <td>public</td>
+                            <td>Centers and zooms the camera to frame an entire match board.</td>
+                        </tr>
+                    </tbody>
+                </table>
+    </body>
+</html>

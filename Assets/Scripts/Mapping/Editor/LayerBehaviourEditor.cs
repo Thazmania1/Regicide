@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
 using static ChunkBehaviour;
-using static GridManager;
+using static VirtualSpaceManager;
 using static PieceMovement;
 
 [CustomEditor(typeof(LayerBehaviour))]
