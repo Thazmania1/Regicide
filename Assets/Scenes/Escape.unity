@@ -60274,7 +60274,7 @@ GameObject:
   - component: {fileID: 1200130376}
   - component: {fileID: 1200130377}
   m_Layer: 0
-  m_Name: Grid
+  m_Name: Virtual space
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

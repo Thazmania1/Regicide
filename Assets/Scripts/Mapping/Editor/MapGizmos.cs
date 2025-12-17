@@ -15,13 +15,13 @@ public static class MapGizmos
     // Draws chunk corners and their names in labels (in a radius of GRID_SIZE * GRID_SIZE from the scene view camera)
     static void OnSceneGUI(SceneView sceneView)
     {
-        GameObject grid = GameObject.Find("Grid");
-        if(grid == null) return;
+        GameObject virtualSpace = GameObject.Find("Virtual space");
+        if(virtualSpace == null) return;
 
         Camera sceneCam = sceneView.camera;
 
         // Finds all chunks in the scene
-        foreach(Transform chunk in grid.transform)
+        foreach(Transform chunk in virtualSpace.transform)
         {
             float distanceFromChunk = Vector3.Distance(sceneCam.transform.position, chunk.position);
 

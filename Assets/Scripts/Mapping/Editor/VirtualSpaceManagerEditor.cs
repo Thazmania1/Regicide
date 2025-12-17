@@ -27,6 +27,8 @@ public class VirtualSpaceManagerEditor : Editor
             }
         EditorGUILayout.EndVertical();
 
+        virtualSpaceManagerTransform.name = "Virtual space"; // Forces correct name
+
         serializedObject.ApplyModifiedProperties();
 
         // The grid layout must never be manipulated

@@ -432,6 +432,9 @@ public class PlayerMovement : PieceMovement
     }
     private void Update()
     {
+        // Allows the player to close the game at any given moment
+        if(Input.GetKeyDown(KeyCode.Escape)) Application.Quit();
+
         if(_virtualPieceManager.IsMatchActive && _virtualPieceManager.CurrentTurn != MatchTeam.PLAYER) return; // Prevents cheesing the match turn system
 
         // Constantly checks for pattern changes
